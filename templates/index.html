@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validateur d'Emails - Esprit</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background: #f8f9fa; /* Gris très clair pour l'arrière-plan */
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #ffffff;
+            color: #333333;
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            color: #333333;
+            font-weight: 600;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            color: #666666;
+        }
+        
+        .tab-container {
+            padding: 0;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 20px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            color: #666666;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab:hover {
+            background: #e9ecef;
+            color: #333333;
+        }
+        
+        .tab.active {
+            color: #d32f2f; /* Rouge seulement pour le texte actif */
+            border-bottom-color: #d32f2f; /* Rouge pour la bordure active */
+            background: #ffffff;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+            background: #ffffff;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333333;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: #ffffff;
+            color: #333333;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #d32f2f;
+            box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.1);
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #d32f2f; /* Rouge seulement pour les boutons */
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: #b71c1c;
+            transform: translateY(-1px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .resultat {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 6px;
+            animation: fadeIn 0.5s ease;
+            border: 1px solid #e0e0e0;
+            background: #f8f9fa;
+        }
+        
+        .valide {
+            border-left: 4px solid #28a745;
+        }
+        
+        .invalide {
+            border-left: 4px solid #d32f2f;
+        }
+        
+        .statistiques {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .statistiques h4 {
+            margin-bottom: 15px;
+            color: #333333;
+            font-weight: 600;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .stat-number {
+            font-size: 1.8em;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .stat-valid {
+            color: #28a745;
+        }
+        
+        .stat-invalid {
+            color: #d32f2f;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #ffffff;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+            color: #333333;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333333;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .chargement {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            color: #666666;
+        }
+        
+        .spinner {
+            border: 3px solid #f8f9fa;
+            border-top: 3px solid #d32f2f;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        .download-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: auto;
+            padding: 10px 20px;
+            margin: 0 5px;
+        }
+        
+        .format-select {
+            width: auto;
+            display: inline-block;
+            margin: 0 10px;
+            background: #ffffff;
+            color: #333333;
+            border: 1px solid #ddd;
+        }
+
+        /* Style pour la dialog d'alerte personnalisée */
+        .custom-alert {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .alert-content {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .alert-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            color: #d32f2f;
+        }
+
+        .alert-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333333;
+        }
+
+        .alert-message {
+            margin-bottom: 20px;
+            line-height: 1.5;
+            color: #666666;
+        }
+
+        .alert-button {
+            background: #d32f2f;
+            color: #ffffff;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+        }
+
+        .alert-button:hover {
+            background: #b71c1c;
+        }
+
+        small {
+            color: #666666;
+            font-size: 0.9em;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 6px;
+            }
+            
+            .tab-content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .alert-content {
+                padding: 20px;
+                margin: 20px;
+            }
+
+            .download-btn {
+                margin: 10px 0;
+                width: 100%;
+            }
+
+            .format-select {
+                margin: 10px 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Dialog d'alerte personnalisée -->
+    <div class="custom-alert" id="customAlert">
+        <div class="alert-content">
+            <div class="alert-icon">❌</div>
+            <div class="alert-title" id="alertTitle">Type de fichier non autorisé</div>
+            <div class="alert-message" id="alertMessage"></div>
+            <button class="alert-button" onclick="fermerAlerte()">Compris</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>📧 Validateur d'Emails</h1>
+            <p>Validez des emails uniques ou importez un fichier pour vérification en lot</p>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tabs">
+                <button class="tab active" onclick="ouvrirOnglet('unique')">📝 Email Unique</button>
+                <button class="tab" onclick="ouvrirOnglet('fichier')">📁 Import de Fichier</button>
+            </div>
+            
+            <!-- Onglet Email Unique -->
+            <div id="unique" class="tab-content active">
+                <div class="form-group">
+                    <label for="emailInput">Adresse email à valider :</label>
+                    <input type="email" id="emailInput" placeholder="Entrez une adresse email (ex: example@gmail.com)" />
+                </div>
+                <button onclick="validerEmail()">Valider l'email</button>
+                
+                <div id="resultatUnique" class="resultat" style="display: none;"></div>
+            </div>
+            
+            <!-- Onglet Import de Fichier -->
+            <div id="fichier" class="tab-content">
+                <div class="form-group">
+                    <label for="fichierInput">Sélectionnez un fichier :</label>
+                    <input type="file" id="fichierInput" accept=".txt,.csv" />
+                    <small>Formats acceptés: .txt (un email par ligne) ou .csv (colonne contenant les emails)</small>
+                </div>
+                <button onclick="importerFichier()">Valider le fichier</button>
+                
+                <div class="chargement" id="chargementFichier">
+                    <div class="spinner"></div>
+                    <p>Traitement en cours... Cette opération peut prendre quelques secondes.</p>
+                </div>
+                
+                <div id="resultatFichier" style="display: none;">
+                    <div class="statistiques" id="statistiques"></div>
+                    
+                    <div class="download-section">
+                        <h4>📥 Télécharger les résultats</h4>
+                        <select id="formatSortie" class="format-select">
+                            <option value="csv">Format CSV</option>
+                            <option value="txt">Format TXT</option>
+                        </select>
+                        <button class="download-btn" onclick="telechargerResultat()">
+                            Télécharger les emails valides
+                        </button>
+                    </div>
+                    
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table id="tableauResultats">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Statut</th>
+                                    <th>Confiance</th>
+                                    <th>Détails</th>
+                                </tr>
+                            </thead>
+                            <tbody id="corpsTableau"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let resultatsFichier = [];
+        
+        // Fonctions pour l'alerte personnalisée
+        function afficherAlerte(titre, message) {
+            document.getElementById('alertTitle').textContent = titre;
+            document.getElementById('alertMessage').textContent = message;
+            document.getElementById('customAlert').style.display = 'flex';
+        }
+
+        function fermerAlerte() {
+            document.getElementById('customAlert').style.display = 'none';
+        }
+
+        // Fermer l'alerte en cliquant à l'extérieur
+        document.getElementById('customAlert').addEventListener('click', function(e) {
+            if (e.target === this) {
+                fermerAlerte();
+            }
+        });
+
+        function ouvrirOnglet(onglet) {
+            // Cacher tous les onglets
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Afficher l'onglet sélectionné
+            document.getElementById(onglet).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        async function validerEmail() {
+            const email = document.getElementById('emailInput').value.trim();
+            const resultatDiv = document.getElementById('resultatUnique');
+            
+            if (!email) {
+                afficherAlerte('Champ vide', 'Veuillez entrer une adresse email à valider.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/valider-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultatDiv.innerHTML = `
+                        <h3>Résultat pour : ${data.email}</h3>
+                        <div class="${data.valide ? 'valide' : 'invalide'}">
+                            <h4>${data.valide ? '✅ EMAIL VALIDE' : '❌ EMAIL INVALIDE'}</h4>
+                            <p><strong>Niveau de confiance :</strong> ${data.confiance}%</p>
+                            <p><strong>Probabilité d'être valide :</strong> ${data.probabilite_valide}%</p>
+                            <p><strong>Probabilité d'être invalide :</strong> ${data.probabilite_invalide}%</p>
+                            ${data.valide ? 
+                                '<p style="margin-top: 15px; font-weight: bold;"> Cette adresse email semble correcte !</p>' :
+                                '<p style="margin-top: 15px;">💡 Vérifiez l\'orthographe et la syntaxe de l\'email.</p>'
+                            }
+                        </div>
+                    `;
+                    resultatDiv.style.display = 'block';
+                } else {
+                    resultatDiv.innerHTML = `<div class="invalide"><strong>Erreur :</strong> ${data.erreur}</div>`;
+                    resultatDiv.style.display = 'block';
+                }
+            } catch (error) {
+                resultatDiv.innerHTML = `<div class="invalide"><strong>Erreur :</strong> ${error.message}</div>`;
+                resultatDiv.style.display = 'block';
+            }
+        }
+        
+        async function importerFichier() {
+            const fichierInput = document.getElementById('fichierInput');
+            const chargement = document.getElementById('chargementFichier');
+            const resultatDiv = document.getElementById('resultatFichier');
+            
+            if (!fichierInput.files[0]) {
+                afficherAlerte('Aucun fichier sélectionné', 'Veuillez sélectionner un fichier à valider.');
+                return;
+            }
+            
+            const file = fichierInput.files[0];
+            const fileName = file.name.toLowerCase();
+            
+            // Vérification stricte du type de fichier
+            if (!fileName.endsWith('.txt') && !fileName.endsWith('.csv')) {
+                const fileExtension = fileName.split('.').pop() || 'inconnu';
+                afficherAlerte(
+                    'Type de fichier non autorisé',
+                    `Le fichier "${file.name}" n'est pas supporté.\n\n` +
+                    `✅ Formats acceptés : .txt, .csv\n` +
+                    `❌ Votre fichier : .${fileExtension}\n\n` +
+                    `Veuillez sélectionner un fichier texte (.txt) ou CSV (.csv).`
+                );
+                fichierInput.value = ''; // Réinitialiser le champ
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('fichier', file);
+            
+            chargement.style.display = 'block';
+            resultatDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/importer-fichier', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                chargement.style.display = 'none';
+                
+                if (response.ok) {
+                    resultatsFichier = data.resultats_detailles;
+                    
+                    // Afficher les statistiques
+                    document.getElementById('statistiques').innerHTML = `
+                        <h4>📊 Statistiques du fichier</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-number">${data.total}</span>
+                                <span>Emails analysés</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number stat-valid">${data.valides}</span>
+                                <span>Emails valides</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number stat-invalid">${data.invalides}</span>
+                                <span>Emails invalides</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">${data.taux_validite}%</span>
+                                <span>Taux de validité</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Afficher le tableau
+                    const corpsTableau = document.getElementById('corpsTableau');
+                    corpsTableau.innerHTML = '';
+                    
+                    data.resultats_detailles.forEach(resultat => {
+                        const ligne = document.createElement('tr');
+                        ligne.innerHTML = `
+                            <td>${resultat.email}</td>
+                            <td>${resultat.valide ? '✅ Valide' : '❌ Invalide'}</td>
+                            <td>${resultat.confiance}%</td>
+                            <td>Valide: ${resultat.probabilite_valide}% / Invalide: ${resultat.probabilite_invalide}%</td>
+                        `;
+                        corpsTableau.appendChild(ligne);
+                    });
+                    
+                    resultatDiv.style.display = 'block';
+                } else {
+                    if (data.erreur.includes('Type de fichier non autorisé')) {
+                        afficherAlerte(
+                            'Erreur de traitement',
+                            `Le serveur a rejeté le fichier : ${data.erreur}\n\n` +
+                            `Type détecté : ${data.type_fichier || 'inconnu'}`
+                        );
+                    } else {
+                        afficherAlerte('Erreur de traitement', data.erreur);
+                    }
+                }
+            } catch (error) {
+                chargement.style.display = 'none';
+                afficherAlerte('Erreur réseau', 'Impossible de contacter le serveur. Vérifiez votre connexion.');
+            }
+        }
+        
+        async function telechargerResultat() {
+            const emailsValides = resultatsFichier
+                .filter(r => r.valide)
+                .map(r => r.email);
+            
+            if (emailsValides.length === 0) {
+                afficherAlerte('Aucun email valide', 'Il n\'y a aucun email valide à télécharger.');
+                return;
+            }
+            
+            const format = document.getElementById('formatSortie').value;
+            
+            try {
+                const response = await fetch('/telecharger-resultat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        emails_valides: emailsValides,
+                        format: format
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Télécharger le fichier
+                    const blob = new Blob([data.contenu], { type: 'text/plain' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = data.nom_fichier;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    afficherAlerte('Erreur de téléchargement', data.erreur);
+                }
+            } catch (error) {
+                afficherAlerte('Erreur réseau', 'Impossible de télécharger le fichier.');
+            }
+        }
+        
+        // Permettre la validation avec la touche Entrée
+        document.getElementById('emailInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                validerEmail();
+            }
+        });
+        
+        // Afficher le nom du fichier sélectionné
+        document.getElementById('fichierInput').addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                const file = e.target.files[0];
+                const fileName = file.name.toLowerCase();
+                
+                // Vérification immédiate lors de la sélection
+                if (!fileName.endsWith('.txt') && !fileName.endsWith('.csv')) {
+                    const fileExtension = fileName.split('.').pop() || 'inconnu';
+                    afficherAlerte(
+                        'Type de fichier non autorisé',
+                        `Le fichier "${file.name}" ne sera pas accepté.\n\n` +
+                        `✅ Formats acceptés : .txt, .csv\n` +
+                        `❌ Votre fichier : .${fileExtension}\n\n` +
+                        `Veuillez sélectionner un fichier compatible.`
+                    );
+                    e.target.value = ''; // Réinitialiser immédiatement
+                }
+            }
+        });
+    </script>
+</body>
+</html>
