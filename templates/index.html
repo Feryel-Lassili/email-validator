@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Validateur d'Emails - Esprit</title>
+    <title>Validateur d'Emails Intelligent - Esprit</title>
     <style>
         * {
             box-sizing: border-box;
@@ -15,7 +15,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333333;
-            background: #f8f9fa; /* Gris très clair pour l'arrière-plan */
+            background: #f8f9fa;
             min-height: 100vh;
             padding: 20px;
         }
@@ -78,8 +78,8 @@
         }
         
         .tab.active {
-            color: #d32f2f; /* Rouge seulement pour le texte actif */
-            border-bottom-color: #d32f2f; /* Rouge pour la bordure active */
+            color: #d32f2f;
+            border-bottom-color: #d32f2f;
             background: #ffffff;
             font-weight: 600;
         }
@@ -125,7 +125,7 @@
         button {
             width: 100%;
             padding: 12px;
-            background: #d32f2f; /* Rouge seulement pour les boutons */
+            background: #d32f2f;
             color: #ffffff;
             border: none;
             border-radius: 4px;
@@ -133,6 +133,7 @@
             font-size: 1em;
             font-weight: 500;
             transition: all 0.3s ease;
+            margin-bottom: 10px;
         }
         
         button:hover {
@@ -275,7 +276,54 @@
             border: 1px solid #ddd;
         }
 
-        /* Style pour la dialog d'alerte personnalisée */
+        /* Styles pour les nouvelles fonctionnalités */
+        .suggestions-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 6px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .suggestion-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .suggestion-email {
+            font-family: monospace;
+            font-weight: bold;
+        }
+        
+        .correction-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+        
+        .correction-btn:hover {
+            background: #45a049;
+        }
+        
+        .correction-option {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f5e8;
+            border-radius: 4px;
+            border: 1px solid #c8e6c9;
+        }
+
         .custom-alert {
             display: none;
             position: fixed;
@@ -389,11 +437,10 @@
     </style>
 </head>
 <body>
-    <!-- Dialog d'alerte personnalisée -->
     <div class="custom-alert" id="customAlert">
         <div class="alert-content">
             <div class="alert-icon">❌</div>
-            <div class="alert-title" id="alertTitle">Type de fichier non autorisé</div>
+            <div class="alert-title" id="alertTitle">Erreur</div>
             <div class="alert-message" id="alertMessage"></div>
             <button class="alert-button" onclick="fermerAlerte()">Compris</button>
         </div>
@@ -401,14 +448,15 @@
 
     <div class="container">
         <div class="header">
-            <h1>📧 Validateur d'Emails</h1>
-            <p>Validez des emails uniques ou importez un fichier pour vérification en lot</p>
+            <h1> Validateur d'Emails Intelligent</h1>
+            <p>Validez et corrigez automatiquement les emails avec l'IA</p>
         </div>
         
         <div class="tab-container">
             <div class="tabs">
-                <button class="tab active" onclick="ouvrirOnglet('unique')">📝 Email Unique</button>
-                <button class="tab" onclick="ouvrirOnglet('fichier')">📁 Import de Fichier</button>
+                <button class="tab active" onclick="ouvrirOnglet('unique')"> Email Unique</button>
+                <button class="tab" onclick="ouvrirOnglet('fichier')"> Import de Fichier</button>
+                <button class="tab" onclick="ouvrirOnglet('correction')"> Correcteur</button>
             </div>
             
             <!-- Onglet Email Unique -->
@@ -457,13 +505,24 @@
                                     <th>Email</th>
                                     <th>Statut</th>
                                     <th>Confiance</th>
-                                    <th>Détails</th>
+                                    <th>Correction suggérée</th>
                                 </tr>
                             </thead>
                             <tbody id="corpsTableau"></tbody>
                         </table>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Onglet Correcteur -->
+            <div id="correction" class="tab-content">
+                <div class="form-group">
+                    <label for="emailACorriger">Email à corriger :</label>
+                    <input type="text" id="emailACorriger" placeholder="Entrez un email avec des erreurs (ex: user@gmial.com)" />
+                </div>
+                <button onclick="corrigerEmail()">🔧 Corriger l'email</button>
+                
+                <div id="resultatCorrection" class="resultat" style="display: none;"></div>
             </div>
         </div>
     </div>
@@ -500,7 +559,7 @@
             
             // Afficher l'onglet sélectionné
             document.getElementById(onglet).classList.add('active');
-            event.target.classList.add('active');
+            event.currentTarget.classList.add('active');
         }
         
         async function validerEmail() {
@@ -524,19 +583,46 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    resultatDiv.innerHTML = `
+                    let html = `
                         <h3>Résultat pour : ${data.email}</h3>
                         <div class="${data.valide ? 'valide' : 'invalide'}">
                             <h4>${data.valide ? '✅ EMAIL VALIDE' : '❌ EMAIL INVALIDE'}</h4>
-                            <p><strong>Niveau de confiance :</strong> ${data.confiance}%</p>
                             <p><strong>Probabilité d'être valide :</strong> ${data.probabilite_valide}%</p>
                             <p><strong>Probabilité d'être invalide :</strong> ${data.probabilite_invalide}%</p>
-                            ${data.valide ? 
-                                '<p style="margin-top: 15px; font-weight: bold;"> Cette adresse email semble correcte !</p>' :
-                                '<p style="margin-top: 15px;">💡 Vérifiez l\'orthographe et la syntaxe de l\'email.</p>'
-                            }
-                        </div>
                     `;
+                    
+                    // AFFICHER LES SUGGESTIONS UNIQUEMENT SI L'EMAIL EST INVALIDE
+                    if (!data.valide) {
+                        if (data.correction_automatique) {
+                            html += `
+                                <div class="correction-option">
+                                    <p><strong>💡 Correction suggérée :</strong> ${data.correction_automatique}</p>
+                                    <button class="correction-btn" onclick="utiliserCorrection('${data.correction_automatique}')">
+                                        Utiliser cette correction
+                                    </button>
+                                </div>
+                            `;
+                        }
+                        
+                        if (data.suggestions_correction && data.suggestions_correction.length > 0) {
+                            html += `
+                                <div class="suggestions-container">
+                                    <h4>🔧 Suggestions de correction :</h4>
+                                    ${data.suggestions_correction.map(suggestion => `
+                                        <div class="suggestion-item">
+                                            <span class="suggestion-email">${suggestion}</span>
+                                            <button class="correction-btn" onclick="utiliserCorrection('${suggestion}')">
+                                                Utiliser
+                                            </button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    html += `</div>`;
+                    resultatDiv.innerHTML = html;
                     resultatDiv.style.display = 'block';
                 } else {
                     resultatDiv.innerHTML = `<div class="invalide"><strong>Erreur :</strong> ${data.erreur}</div>`;
@@ -561,17 +647,13 @@
             const file = fichierInput.files[0];
             const fileName = file.name.toLowerCase();
             
-            // Vérification stricte du type de fichier
             if (!fileName.endsWith('.txt') && !fileName.endsWith('.csv')) {
                 const fileExtension = fileName.split('.').pop() || 'inconnu';
                 afficherAlerte(
                     'Type de fichier non autorisé',
-                    `Le fichier "${file.name}" n'est pas supporté.\n\n` +
-                    `✅ Formats acceptés : .txt, .csv\n` +
-                    `❌ Votre fichier : .${fileExtension}\n\n` +
-                    `Veuillez sélectionner un fichier texte (.txt) ou CSV (.csv).`
+                    `Le fichier "${file.name}" n'est pas supporté.\n\nFormats acceptés : .txt, .csv\nVotre fichier : .${fileExtension}`
                 );
-                fichierInput.value = ''; // Réinitialiser le champ
+                fichierInput.value = '';
                 return;
             }
             
@@ -593,7 +675,7 @@
                 if (response.ok) {
                     resultatsFichier = data.resultats_detailles;
                     
-                    // Afficher les statistiques
+                    // Statistiques standard
                     document.getElementById('statistiques').innerHTML = `
                         <h4>📊 Statistiques du fichier</h4>
                         <div class="stats-grid">
@@ -616,37 +698,112 @@
                         </div>
                     `;
                     
-                    // Afficher le tableau
+                    // Tableau simplifié sans score qualité
                     const corpsTableau = document.getElementById('corpsTableau');
                     corpsTableau.innerHTML = '';
                     
                     data.resultats_detailles.forEach(resultat => {
                         const ligne = document.createElement('tr');
+                        // Afficher la correction uniquement si l'email est invalide
+                        const correction = !resultat.valide ? 
+                            (resultat.correction_automatique || 
+                             (resultat.suggestions_correction && resultat.suggestions_correction[0]) || 
+                             'Aucune') : '-';
+                         
                         ligne.innerHTML = `
                             <td>${resultat.email}</td>
                             <td>${resultat.valide ? '✅ Valide' : '❌ Invalide'}</td>
                             <td>${resultat.confiance}%</td>
-                            <td>Valide: ${resultat.probabilite_valide}% / Invalide: ${resultat.probabilite_invalide}%</td>
+                            <td>${correction}</td>
                         `;
                         corpsTableau.appendChild(ligne);
                     });
                     
                     resultatDiv.style.display = 'block';
                 } else {
-                    if (data.erreur.includes('Type de fichier non autorisé')) {
-                        afficherAlerte(
-                            'Erreur de traitement',
-                            `Le serveur a rejeté le fichier : ${data.erreur}\n\n` +
-                            `Type détecté : ${data.type_fichier || 'inconnu'}`
-                        );
-                    } else {
-                        afficherAlerte('Erreur de traitement', data.erreur);
-                    }
+                    afficherAlerte('Erreur de traitement', data.erreur);
                 }
             } catch (error) {
                 chargement.style.display = 'none';
                 afficherAlerte('Erreur réseau', 'Impossible de contacter le serveur. Vérifiez votre connexion.');
             }
+        }
+        
+        async function corrigerEmail() {
+            const email = document.getElementById('emailACorriger').value.trim();
+            const resultatDiv = document.getElementById('resultatCorrection');
+            
+            if (!email) {
+                afficherAlerte('Champ vide', 'Veuillez entrer une adresse email à corriger.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/corriger-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    let html = `
+                        <h3>Correction pour : ${data.email_original}</h3>
+                        <div class="valide">
+                            <p><strong>Nombre de suggestions :</strong> ${data.nombre_suggestions}</p>
+                    `;
+                    
+                    if (data.meilleure_suggestion) {
+                        html += `
+                            <div class="suggestions-container">
+                                <h4>🎯 Meilleure suggestion :</h4>
+                                <div class="suggestion-item">
+                                    <span class="suggestion-email">${data.meilleure_suggestion}</span>
+                                    <button class="correction-btn" onclick="utiliserCorrection('${data.meilleure_suggestion}')">
+                                        Utiliser
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    if (data.suggestions && data.suggestions.length > 0) {
+                        html += `
+                            <div class="suggestions-container">
+                                <h4>🔧 Toutes les suggestions :</h4>
+                                ${data.suggestions.map(suggestion => `
+                                    <div class="suggestion-item">
+                                        <span class="suggestion-email">${suggestion}</span>
+                                        <button class="correction-btn" onclick="utiliserCorrection('${suggestion}')">
+                                            Utiliser
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+                    
+                    html += `</div>`;
+                    resultatDiv.innerHTML = html;
+                    resultatDiv.style.display = 'block';
+                } else {
+                    resultatDiv.innerHTML = `<div class="invalide"><strong>Erreur :</strong> ${data.erreur}</div>`;
+                    resultatDiv.style.display = 'block';
+                }
+            } catch (error) {
+                resultatDiv.innerHTML = `<div class="invalide"><strong>Erreur :</strong> ${error.message}</div>`;
+                resultatDiv.style.display = 'block';
+            }
+        }
+        
+        function utiliserCorrection(correction) {
+            document.getElementById('emailInput').value = correction;
+            document.getElementById('emailACorriger').value = correction;
+            ouvrirOnglet('unique');
+            validerEmail();
         }
         
         async function telechargerResultat() {
@@ -676,7 +833,6 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Télécharger le fichier
                     const blob = new Blob([data.contenu], { type: 'text/plain' });
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -694,30 +850,27 @@
             }
         }
         
-        // Permettre la validation avec la touche Entrée
+        // Gestionnaires d'événements
         document.getElementById('emailInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                validerEmail();
-            }
+            if (e.key === 'Enter') validerEmail();
         });
         
-        // Afficher le nom du fichier sélectionné
+        document.getElementById('emailACorriger').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') corrigerEmail();
+        });
+        
         document.getElementById('fichierInput').addEventListener('change', function(e) {
             if (e.target.files[0]) {
                 const file = e.target.files[0];
                 const fileName = file.name.toLowerCase();
                 
-                // Vérification immédiate lors de la sélection
                 if (!fileName.endsWith('.txt') && !fileName.endsWith('.csv')) {
                     const fileExtension = fileName.split('.').pop() || 'inconnu';
                     afficherAlerte(
                         'Type de fichier non autorisé',
-                        `Le fichier "${file.name}" ne sera pas accepté.\n\n` +
-                        `✅ Formats acceptés : .txt, .csv\n` +
-                        `❌ Votre fichier : .${fileExtension}\n\n` +
-                        `Veuillez sélectionner un fichier compatible.`
+                        `Le fichier "${file.name}" ne sera pas accepté. Formats acceptés : .txt, .csv`
                     );
-                    e.target.value = ''; // Réinitialiser immédiatement
+                    e.target.value = '';
                 }
             }
         });

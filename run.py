@@ -10,8 +10,8 @@ def ouvrir_navigateur():
     webbrowser.open('http://localhost:5000')
 
 if __name__ == '_main_':
-    print("🚀 Démarrage de l'application de validation d'emails...")
-    print("📧 Patientez pendant le chargement...")
+    print("Démarrage de l'application de validation d'emails...")
+    print("Patientez pendant le chargement...")
     
     # Ouvrir le navigateur automatiquement
     threading.Thread(target=ouvrir_navigateur).start()
