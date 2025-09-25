@@ -276,7 +276,7 @@
             border: 1px solid #ddd;
         }
 
-        /* Styles pour les nouvelles fonctionnalités */
+        /* Styles pour les fonctionnalités */
         .suggestions-container {
             margin-top: 15px;
             padding: 15px;
@@ -322,6 +322,91 @@
             background: #e8f5e8;
             border-radius: 4px;
             border: 1px solid #c8e6c9;
+        }
+
+        .diagnostic-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+        }
+
+        /* NOUVEAU: Styles pour le Mode Expert */
+        .expert-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            color: white;
+            display: none;
+        }
+
+        .expert-toggle {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .expert-toggle:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+        }
+
+        .expert-toggle.active {
+            background: #ff9800;
+        }
+
+        .expert-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .expert-stat {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .expert-stat .number {
+            font-size: 2em;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .expert-stat .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .domain-list, .error-patterns {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .domain-item, .error-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .domain-item:last-child, .error-item:last-child {
+            border-bottom: none;
         }
 
         .custom-alert {
@@ -419,6 +504,10 @@
                 grid-template-columns: 1fr;
             }
 
+            .expert-stats {
+                grid-template-columns: 1fr;
+            }
+
             .alert-content {
                 padding: 20px;
                 margin: 20px;
@@ -454,18 +543,18 @@
         
         <div class="tab-container">
             <div class="tabs">
-                <button class="tab active" onclick="ouvrirOnglet('unique')"> Email Unique</button>
-                <button class="tab" onclick="ouvrirOnglet('fichier')"> Import de Fichier</button>
-                <button class="tab" onclick="ouvrirOnglet('correction')"> Correcteur</button>
+                <button class="tab active" onclick="ouvrirOnglet('unique')"> Valider/Corriger un Email</button>
+                <button class="tab" onclick="ouvrirOnglet('fichier')"> Valider un Fichier</button>
             </div>
             
             <!-- Onglet Email Unique -->
             <div id="unique" class="tab-content active">
                 <div class="form-group">
-                    <label for="emailInput">Adresse email à valider :</label>
-                    <input type="email" id="emailInput" placeholder="Entrez une adresse email (ex: example@gmail.com)" />
+                    <label for="emailInput">Adresse email à valider ou corriger :</label>
+                    <input type="email" id="emailInput" placeholder="Entrez une adresse email (ex: example@gmail.com ou user@gmial.com)" />
+                    <small>Vous pouvez entrer un email valide pour le vérifier, ou un email avec des erreurs pour obtenir des corrections</small>
                 </div>
-                <button onclick="validerEmail()">Valider l'email</button>
+                <button onclick="validerEmail()">Valider et Corriger l'email</button>
                 
                 <div id="resultatUnique" class="resultat" style="display: none;"></div>
             </div>
@@ -486,6 +575,43 @@
                 
                 <div id="resultatFichier" style="display: none;">
                     <div class="statistiques" id="statistiques"></div>
+                    
+                    <!-- NOUVEAU: Bouton Mode Expert -->
+                    <div style="text-align: center; margin: 20px 0;">
+                        <button class="expert-toggle" onclick="toggleModeExpert()" id="expertToggle">
+                            🔍 Activer le Mode Expert
+                        </button>
+                    </div>
+
+                    <!-- NOUVEAU: Section Mode Expert -->
+                    <div class="expert-section" id="expertSection">
+                        <h3 style="text-align: center; margin-bottom: 20px;">🔍 MODE EXPERT - ANALYSE AVANCÉE</h3>
+                        
+                        <div class="expert-stats">
+                            <div class="expert-stat">
+                                <span class="number" id="expertScoreQualite">0</span>
+                                <span class="label">Score qualité moyen</span>
+                            </div>
+                            <div class="expert-stat">
+                                <span class="number" id="expertLongueurUsername">0</span>
+                                <span class="label">Long. moyenne username</span>
+                            </div>
+                            <div class="expert-stat">
+                                <span class="number" id="expertTotalEmails">0</span>
+                                <span class="label">Emails analysés</span>
+                            </div>
+                        </div>
+
+                        <div class="domain-list">
+                            <h4>📊 Top 5 Domaines</h4>
+                            <div id="domainesListe"></div>
+                        </div>
+
+                        <div class="error-patterns">
+                            <h4>⚠️ Patterns d'Erreurs</h4>
+                            <div id="patternsErreurs"></div>
+                        </div>
+                    </div>
                     
                     <div class="download-section">
                         <h4>📥 Télécharger les résultats</h4>
@@ -513,22 +639,12 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Onglet Correcteur -->
-            <div id="correction" class="tab-content">
-                <div class="form-group">
-                    <label for="emailACorriger">Email à corriger :</label>
-                    <input type="text" id="emailACorriger" placeholder="Entrez un email avec des erreurs (ex: user@gmial.com)" />
-                </div>
-                <button onclick="corrigerEmail()">🔧 Corriger l'email</button>
-                
-                <div id="resultatCorrection" class="resultat" style="display: none;"></div>
-            </div>
         </div>
     </div>
 
     <script>
         let resultatsFichier = [];
+        let statistiquesExpert = null;
         
         // Fonctions pour l'alerte personnalisée
         function afficherAlerte(titre, message) {
@@ -560,6 +676,64 @@
             // Afficher l'onglet sélectionné
             document.getElementById(onglet).classList.add('active');
             event.currentTarget.classList.add('active');
+        }
+        
+        // NOUVELLE FONCTION: Mode Expert
+        function toggleModeExpert() {
+            const expertSection = document.getElementById('expertSection');
+            const expertToggle = document.getElementById('expertToggle');
+            
+            if (expertSection.style.display === 'none') {
+                expertSection.style.display = 'block';
+                expertToggle.textContent = '🔍 Désactiver le Mode Expert';
+                expertToggle.classList.add('active');
+                
+                // Afficher les statistiques expert si disponibles
+                if (statistiquesExpert) {
+                    afficherStatistiquesExpert();
+                }
+            } else {
+                expertSection.style.display = 'none';
+                expertToggle.textContent = '🔍 Activer le Mode Expert';
+                expertToggle.classList.remove('active');
+            }
+        }
+
+        // NOUVELLE FONCTION: Afficher les statistiques expert
+        function afficherStatistiquesExpert() {
+            if (!statistiquesExpert) return;
+            
+            document.getElementById('expertScoreQualite').textContent = statistiquesExpert.score_qualite_moyen;
+            document.getElementById('expertLongueurUsername').textContent = statistiquesExpert.longueur_moyenne_username;
+            document.getElementById('expertTotalEmails').textContent = statistiquesExpert.total_emails;
+            
+            // Afficher les domaines
+            const domainesHtml = Object.entries(statistiquesExpert.domaines_populaires)
+                .map(([domaine, count]) => 
+                    `<div class="domain-item">
+                        <span>${domaine}</span>
+                        <strong>${count}</strong>
+                     </div>`
+                ).join('');
+            document.getElementById('domainesListe').innerHTML = domainesHtml || '<p>Aucun domaine identifié</p>';
+            
+            // Afficher les patterns d'erreurs
+            const erreursHtml = Object.entries(statistiquesExpert.patterns_erreurs)
+                .map(([erreur, count]) => {
+                    const labels = {
+                        'manque_arobase': 'Manque @',
+                        'domaine_manquant': 'Domaine manquant',
+                        'username_manquant': 'Username manquant',
+                        'double_arobase': 'Double @',
+                        'caracteres_invalides': 'Caractères invalides'
+                    };
+                    return `
+                        <div class="error-item">
+                            <span>${labels[erreur] || erreur}</span>
+                            <strong style="color: ${count > 0 ? '#ff6b6b' : '#51cf66'}">${count}</strong>
+                         </div>`;
+                }).join('');
+            document.getElementById('patternsErreurs').innerHTML = erreursHtml;
         }
         
         async function validerEmail() {
@@ -596,7 +770,7 @@
                         if (data.correction_automatique) {
                             html += `
                                 <div class="correction-option">
-                                    <p><strong>💡 Correction suggérée :</strong> ${data.correction_automatique}</p>
+                                    <p><strong>✅ CORRECTION SUGGÉRÉE :</strong> ${data.correction_automatique}</p>
                                     <button class="correction-btn" onclick="utiliserCorrection('${data.correction_automatique}')">
                                         Utiliser cette correction
                                     </button>
@@ -607,7 +781,7 @@
                         if (data.suggestions_correction && data.suggestions_correction.length > 0) {
                             html += `
                                 <div class="suggestions-container">
-                                    <h4>🔧 Suggestions de correction :</h4>
+                                    <h4>💡 Autres suggestions :</h4>
                                     ${data.suggestions_correction.map(suggestion => `
                                         <div class="suggestion-item">
                                             <span class="suggestion-email">${suggestion}</span>
@@ -619,6 +793,16 @@
                                 </div>
                             `;
                         }
+                    }
+                    
+                    // AFFICHER LE DIAGNOSTIC
+                    if (data.diagnostic && data.diagnostic.length > 0) {
+                        html += `
+                            <div class="diagnostic-container">
+                                <h4>🔍 DIAGNOSTIC :</h4>
+                                ${data.diagnostic.map(diag => `<p style="margin: 5px 0;">${diag}</p>`).join('')}
+                            </div>
+                        `;
                     }
                     
                     html += `</div>`;
@@ -674,6 +858,7 @@
                 
                 if (response.ok) {
                     resultatsFichier = data.resultats_detailles;
+                    statistiquesExpert = data.statistiques_avancees; // NOUVEAU: Stocker les stats expert
                     
                     // Statistiques standard
                     document.getElementById('statistiques').innerHTML = `
@@ -729,80 +914,8 @@
             }
         }
         
-        async function corrigerEmail() {
-            const email = document.getElementById('emailACorriger').value.trim();
-            const resultatDiv = document.getElementById('resultatCorrection');
-            
-            if (!email) {
-                afficherAlerte('Champ vide', 'Veuillez entrer une adresse email à corriger.');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/corriger-email', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email: email })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    let html = `
-                        <h3>Correction pour : ${data.email_original}</h3>
-                        <div class="valide">
-                            <p><strong>Nombre de suggestions :</strong> ${data.nombre_suggestions}</p>
-                    `;
-                    
-                    if (data.meilleure_suggestion) {
-                        html += `
-                            <div class="suggestions-container">
-                                <h4>🎯 Meilleure suggestion :</h4>
-                                <div class="suggestion-item">
-                                    <span class="suggestion-email">${data.meilleure_suggestion}</span>
-                                    <button class="correction-btn" onclick="utiliserCorrection('${data.meilleure_suggestion}')">
-                                        Utiliser
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    }
-                    
-                    if (data.suggestions && data.suggestions.length > 0) {
-                        html += `
-                            <div class="suggestions-container">
-                                <h4>🔧 Toutes les suggestions :</h4>
-                                ${data.suggestions.map(suggestion => `
-                                    <div class="suggestion-item">
-                                        <span class="suggestion-email">${suggestion}</span>
-                                        <button class="correction-btn" onclick="utiliserCorrection('${suggestion}')">
-                                            Utiliser
-                                        </button>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        `;
-                    }
-                    
-                    html += `</div>`;
-                    resultatDiv.innerHTML = html;
-                    resultatDiv.style.display = 'block';
-                } else {
-                    resultatDiv.innerHTML = `<div class="invalide"><strong>Erreur :</strong> ${data.erreur}</div>`;
-                    resultatDiv.style.display = 'block';
-                }
-            } catch (error) {
-                resultatDiv.innerHTML = `<div class="invalide"><strong>Erreur :</strong> ${error.message}</div>`;
-                resultatDiv.style.display = 'block';
-            }
-        }
-        
         function utiliserCorrection(correction) {
             document.getElementById('emailInput').value = correction;
-            document.getElementById('emailACorriger').value = correction;
-            ouvrirOnglet('unique');
             validerEmail();
         }
         
@@ -853,10 +966,6 @@
         // Gestionnaires d'événements
         document.getElementById('emailInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') validerEmail();
-        });
-        
-        document.getElementById('emailACorriger').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') corrigerEmail();
         });
         
         document.getElementById('fichierInput').addEventListener('change', function(e) {

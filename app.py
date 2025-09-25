@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Application Flask de validation d'emails avec correcteur intelligent
+Application Flask de validation d'emails avec correcteur intelligent AMÉLIORÉ
 """
 
 import re
@@ -13,6 +13,7 @@ from difflib import SequenceMatcher, get_close_matches
 import os
 from werkzeug.utils import secure_filename
 from sklearn.ensemble import RandomForestClassifier
+from collections import Counter
 
 # -----------------------------
 # CONFIGURATION FLASK
@@ -26,14 +27,15 @@ app.config['SECRET_KEY'] = 'votre_cle_secrete_ici'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # -----------------------------
-# NOUVEAU MODULE : CORRECTEUR INTELLIGENT
+# MODULE CORRECTEUR INTELLIGENT AMÉLIORÉ
 # -----------------------------
 
 class IntelligentEmailCorrector:
     def __init__(self):
         self.common_domains = [
             'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com',
-            'protonmail.com', 'icloud.com', 'aol.com', 'yandex.com'
+            'protonmail.com', 'icloud.com', 'aol.com', 'yandex.com',
+            'esprit.tn', 'example.com', 'company.org'
         ]
         
         self.common_typos = {
@@ -47,63 +49,122 @@ class IntelligentEmailCorrector:
             'hotmail.co': 'hotmail.com'
         }
         
-        self.common_username_typos = {
-            'gmail': 'gmail',
-            'gmai': 'gmail',
-            'yahoo': 'yahoo', 
-            'yaho': 'yahoo',
-            'outlook': 'outlook',
-            'outlok': 'outlook'
-        }
+        self.common_usernames = [
+            'user', 'test', 'contact', 'admin', 'info', 'support',
+            'john', 'alice', 'bob', 'david', 'sarah', 'michael',
+            'service', 'hello', 'newsletter', 'noreply'
+        ]
 
     def suggest_corrections(self, email):
         """Propose des corrections intelligentes pour un email"""
         suggestions = []
         
-        # Vérification basique de format
-        if '@' not in email:
-            return self._suggest_missing_at(email)
+        # Cas 1: Email ne contient que le domaine (@hotmail.com)
+        if email.startswith('@') and '.' in email:
+            suggestions.extend(self._suggest_username_for_domain(email))
         
-        username, domain = email.split('@', 1)
+        # Cas 2: Email ne contient que le nom d'utilisateur (hhh@)
+        elif email.endswith('@') and len(email) > 1:
+            suggestions.extend(self._suggest_domain_for_username(email))
         
-        # Suggestions pour le domaine
-        domain_suggestions = self._suggest_domain_corrections(domain)
-        # Suggestions pour le nom d'utilisateur
-        username_suggestions = self._suggest_username_corrections(username)
-        # Suggestions structurelles
-        structural_suggestions = self._suggest_structural_corrections(email)
+        # Cas 3: Aucun @ présent
+        elif '@' not in email:
+            suggestions.extend(self._suggest_missing_at(email))
         
-        # Combiner toutes les suggestions
-        all_suggestions = domain_suggestions + username_suggestions + structural_suggestions
+        # Cas 4: Email complet mais avec erreurs
+        else:
+            try:
+                username, domain = email.split('@', 1)
+                suggestions.extend(self._suggest_domain_corrections(domain, username))
+                suggestions.extend(self._suggest_username_corrections(username, domain))
+                suggestions.extend(self._suggest_structural_corrections(email))
+            except ValueError:
+                # Cas où l'email a plusieurs @
+                suggestions.extend(self._suggest_structural_corrections(email))
         
         # Éliminer les doublons et garder les meilleures
-        unique_suggestions = list(set(all_suggestions))
-        unique_suggestions.sort(key=lambda x: self._calculate_confidence(x))
+        unique_suggestions = list(set([s for s in suggestions if s]))
+        unique_suggestions.sort(key=lambda x: self._calculate_confidence(x), reverse=True)
         
-        return unique_suggestions[:3]  # Retourne les 3 meilleures suggestions
+        return unique_suggestions[:5]  # Retourne les 5 meilleures suggestions
 
-    def _suggest_domain_corrections(self, domain):
+    def _suggest_username_for_domain(self, domain_email):
+        """Suggère des noms d'utilisateur pour un domaine donné"""
+        suggestions = []
+        domain = domain_email[1:]  # Enlever le @
+        
+        for username in self.common_usernames:
+            suggestions.append(f"{username}{domain_email}")  # user@hotmail.com
+            suggestions.append(f"{username}.test{domain_email}")  # user.test@hotmail.com
+            suggestions.append(f"{username}123{domain_email}")  # user123@hotmail.com
+        
+        # Ajouter des suggestions basées sur le domaine
+        if 'hotmail' in domain:
+            suggestions.append(f"contact{domain_email}")
+            suggestions.append(f"support{domain_email}")
+        
+        return suggestions
+
+    def _suggest_domain_for_username(self, username_email):
+        """Suggère des domaines pour un nom d'utilisateur donné"""
+        suggestions = []
+        username = username_email[:-1]  # Enlever le @
+        
+        for domain in self.common_domains:
+            suggestions.append(f"{username_email}{domain}")  # hhh@gmail.com
+            suggestions.append(f"{username}@{domain}")  # hhh@gmail.com (format propre)
+        
+        return suggestions
+
+    def _suggest_missing_at(self, email):
+        """Suggère des corrections quand @ est manquant"""
+        suggestions = []
+        
+        # Cherche des patterns qui ressemblent à des emails sans @
+        for common_domain in self.common_domains:
+            if common_domain in email:
+                # Trouver où commence le domaine
+                domain_index = email.find(common_domain)
+                if domain_index > 0:
+                    username = email[:domain_index]
+                    domain = email[domain_index:]
+                    suggestions.append(f"{username}@{domain}")
+        
+        # Si ça ressemble à "nomdomaine.com"
+        if '.' in email and len(email.split('.')[-1]) >= 2:
+            parts = email.split('.')
+            if len(parts) >= 2:
+                # Essayer différentes combinaisons
+                suggestions.append(f"user@{email}")
+                suggestions.append(f"contact@{email}")
+                if len(parts[0]) > 2:  # Si la première partie semble être un username
+                    suggestions.append(f"{parts[0]}@{'.'.join(parts[1:])}")
+        
+        return suggestions
+
+    def _suggest_domain_corrections(self, domain, username=""):
         """Suggère des corrections pour le domaine"""
         suggestions = []
         
         # Correction des fautes de frappe courantes
         if domain in self.common_typos:
-            suggestions.append(self.common_typos[domain])
+            suggestions.append(f"{username}@{self.common_typos[domain]}")
         
         # Recherche de domaines similaires
-        close_matches = get_close_matches(domain, self.common_domains, n=2, cutoff=0.7)
-        suggestions.extend(close_matches)
+        close_matches = get_close_matches(domain, self.common_domains, n=3, cutoff=0.6)
+        for match in close_matches:
+            suggestions.append(f"{username}@{match}")
         
         # Ajout d'extensions manquantes
         if '.' not in domain and len(domain) > 3:
             for common_domain in self.common_domains:
                 main_domain = common_domain.split('.')[0]
                 if main_domain in domain:
-                    suggestions.append(common_domain)
+                    suggestions.append(f"{username}@{common_domain}")
         
-        return [f"@{suggestion}" for suggestion in suggestions]
+        return suggestions
 
-    def _suggest_username_corrections(self, username):
+    def _suggest_username_corrections(self, username, domain=""):
         """Suggère des corrections pour le nom d'utilisateur"""
         suggestions = []
         
@@ -112,7 +173,14 @@ class IntelligentEmailCorrector:
         if invalid_chars:
             cleaned = re.sub(r'[^a-zA-Z0-9._%+-]', '', username)
             if cleaned:
-                suggestions.append(cleaned)
+                suggestions.append(f"{cleaned}@{domain}")
+        
+        # Suggestions de noms d'utilisateur communs
+        if len(username) < 3 or not username.replace('.', '').replace('_', '').isalnum():
+            for common_user in self.common_usernames:
+                suggestions.append(f"{common_user}@{domain}")
+                if username:  # Essayer de combiner avec l'username original
+                    suggestions.append(f"{common_user}.{username}@{domain}")
         
         return suggestions
 
@@ -133,39 +201,53 @@ class IntelligentEmailCorrector:
         if email.startswith('.') or email.endswith('.'):
             suggestions.append(email.strip('.'))
         
-        return suggestions
-
-    def _suggest_missing_at(self, email):
-        """Suggère des corrections quand @ est manquant"""
-        suggestions = []
-        
-        # Cherche des patterns qui ressemblent à des emails sans @
-        for common_domain in self.common_domains:
-            if common_domain in email:
-                # Remplace le domaine par @domaine
-                suggestion = email.replace(common_domain, f"@{common_domain}")
-                suggestions.append(suggestion)
+        # @ au début ou à la fin
+        if email.startswith('@'):
+            suggestions.append(f"user{email}")
+        if email.endswith('@'):
+            suggestions.append(f"{email}gmail.com")
         
         return suggestions
 
     def _calculate_confidence(self, suggestion):
         """Calcule un score de confiance pour la suggestion"""
+        if not suggestion:
+            return -100
+            
         score = 0
         
-        # Bonus pour les domaines communs
-        domain = suggestion.split('@')[-1] if '@' in suggestion else ''
-        if domain in self.common_domains:
-            score += 10
+        # Vérifier que c'est un email valide
+        if '@' not in suggestion or '.' not in suggestion:
+            return -10
         
-        # Bonus pour la longueur raisonnable
-        if 5 <= len(suggestion) <= 50:
-            score += 5
-        
-        # Malus pour les caractères spéciaux excessifs
-        special_chars = len(re.findall(r'[^a-zA-Z0-9@._-]', suggestion))
-        score -= special_chars * 2
-        
-        return score
+        try:
+            parts = suggestion.split('@')
+            if len(parts) != 2:
+                return -10
+            
+            username, domain = parts
+            
+            # Bonus pour les domaines communs
+            if domain in self.common_domains:
+                score += 20
+            
+            # Bonus pour la longueur raisonnable du username
+            if 3 <= len(username) <= 30:
+                score += 10
+            elif len(username) == 0:
+                score -= 15  # Pénalité si username vide
+            
+            # Bonus pour username alphanumérique
+            if username.replace('.', '').replace('_', '').replace('-', '').isalnum():
+                score += 5
+            
+            # Malus pour les caractères spéciaux excessifs
+            special_chars = len(re.findall(r'[^a-zA-Z0-9@._-]', suggestion))
+            score -= special_chars * 3
+            
+            return score
+        except:
+            return -10
 
 # Initialisation du correcteur
 corrector = IntelligentEmailCorrector()
@@ -183,18 +265,18 @@ data = {
         "bademail@", "noatsymbol.com", "hello@@gmail.com",
         "test@.com", "@gmail.com", "valid@example.org",
         "test.email+tag@gmail.com", "contact@company.com.uk",
-        "user@gmial.com", "test@yahoesprit.tn", "contact@outlok.com"
+        "user@gmial.com", "test@yaho.com", "contact@outlok.com",
+        "hhh@", "@hotmail.com", "usergmail.com"  # Nouveaux cas de test
     ],
-    # Correction: "abc@gmail.com" should be valid (1 instead of 0)
-    "label": [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0]
+    "label": [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0]
 }
-
 
 df = pd.DataFrame(data)
 
 # Domaines courants (étendu)
 common_domains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", 
-                  "protonmail.com", "aol.com", "icloud.com", "example.org"]
+                  "protonmail.com", "aol.com", "icloud.com", "example.org",
+                  "esprit.tn"]
 
 def similar(a, b):
     """Calcule la similarité entre deux chaînes"""
@@ -231,19 +313,22 @@ def extract_features(email):
     suspicious = len(re.findall(r'[\!\#\$\%\^\&\*\(\)\=\+\{\}\[\]\:\;\'\<\>\?\/\\\|]', email))
     features.append(suspicious)
     
-    # 7. Score de qualité (basé sur correcteur) – mais seulement si domaine n’est pas déjà valide
-    suggestions = []
-    if domain not in common_domains:
-        suggestions = corrector.suggest_corrections(email)
-    quality_score = max([corrector._calculate_confidence(sugg) for sugg in suggestions]) if suggestions else 10
+    # 7. Score de qualité (basé sur correcteur)
+    suggestions = corrector.suggest_corrections(email)
+    quality_score = max([corrector._calculate_confidence(sugg) for sugg in suggestions]) if suggestions else 0
     features.append(quality_score)
     
     # 8. Fautes de frappe connues
     has_common_typo = 1 if any(typo in email for typo in corrector.common_typos.keys()) else 0
     features.append(has_common_typo)
     
+    # 9. Parties manquantes
+    missing_username = 1 if email.startswith('@') else 0
+    missing_domain = 1 if email.endswith('@') else 0
+    missing_at = 1 if '@' not in email else 0
+    features.extend([missing_username, missing_domain, missing_at])
+    
     return features
-
 
 # Entraînement du modèle
 print("Entraînement du modèle amélioré en cours...")
@@ -258,6 +343,29 @@ print("Modèle amélioré entraîné avec succès!")
 # FONCTIONS UTILITAIRES AMÉLIORÉES
 # -----------------------------
 
+def _get_email_diagnostic(email):
+    """Retourne un diagnostic détaillé de l'email"""
+    diagnostics = []
+    
+    if email.startswith('@'):
+        diagnostics.append("❌ Nom d'utilisateur manquant avant le @")
+    elif email.endswith('@'):
+        diagnostics.append("❌ Domaine manquant après le @")
+    elif '@' not in email:
+        diagnostics.append("❌ Symbole @ manquant")
+    else:
+        username, domain = email.split('@', 1)
+        if not username:
+            diagnostics.append("❌ Nom d'utilisateur vide")
+        if not domain:
+            diagnostics.append("❌ Domaine vide")
+        if '.' not in domain:
+            diagnostics.append("❌ Extension de domaine manquante")
+        if len(username) < 3:
+            diagnostics.append("⚠️ Nom d'utilisateur trop court")
+    
+    return diagnostics
+
 def valider_email_unique(email):
     """Valide un email unique et retourne le résultat amélioré"""
     features = extract_features(email)
@@ -265,10 +373,19 @@ def valider_email_unique(email):
     prediction = model.predict([features])[0]
     confidence = max(proba)
     
-    # Suggestions seulement si prediction invalide
-    suggestions = corrector.suggest_corrections(email) if prediction == 0 else []
+    # Toujours générer des suggestions
+    suggestions = corrector.suggest_corrections(email)
     
-    quality_score = max([corrector._calculate_confidence(sugg) for sugg in suggestions]) if suggestions else 10
+    # Filtrer les suggestions valides
+    valid_suggestions = []
+    for suggestion in suggestions:
+        if suggestion:  # Vérifier que la suggestion n'est pas vide
+            suggestion_features = extract_features(suggestion)
+            suggestion_pred = model.predict([suggestion_features])[0]
+            if suggestion_pred == 1:  # Suggestion valide
+                valid_suggestions.append(suggestion)
+    
+    quality_score = max([corrector._calculate_confidence(sugg) for sugg in valid_suggestions]) if valid_suggestions else 0
     
     return {
         'email': email,
@@ -276,11 +393,68 @@ def valider_email_unique(email):
         'confiance': round(confidence * 100, 2),
         'probabilite_valide': round(proba[1] * 100, 2),
         'probabilite_invalide': round(proba[0] * 100, 2),
-        'suggestions_correction': suggestions[:3],
+        'suggestions_correction': valid_suggestions[:3],
         'score_qualite': quality_score,
-        'correction_automatique': suggestions[0] if suggestions and quality_score > 8 else None
+        'correction_automatique': valid_suggestions[0] if valid_suggestions and quality_score > 5 else None,
+        'diagnostic': _get_email_diagnostic(email)
     }
 
+def analyser_statistiques_avancees(emails):
+    """Analyse statistique avancée des emails - MODE EXPERT"""
+    if not emails:
+        return {}
+    
+    domains = []
+    usernames = []
+    patterns_erreurs = {
+        'manque_arobase': 0,
+        'domaine_manquant': 0,
+        'username_manquant': 0,
+        'double_arobase': 0,
+        'caracteres_invalides': 0
+    }
+    
+    for email in emails:
+        # Analyse des domaines
+        if '@' in email:
+            parts = email.split('@')
+            if len(parts) == 2:
+                domains.append(parts[1])
+                usernames.append(parts[0])
+        
+        # Détection des patterns d'erreurs
+        if '@' not in email:
+            patterns_erreurs['manque_arobase'] += 1
+        elif email.startswith('@'):
+            patterns_erreurs['username_manquant'] += 1
+        elif email.endswith('@'):
+            patterns_erreurs['domaine_manquant'] += 1
+        elif email.count('@') > 1:
+            patterns_erreurs['double_arobase'] += 1
+        
+        if re.search(r'[^a-zA-Z0-9@._-]', email):
+            patterns_erreurs['caracteres_invalides'] += 1
+    
+    # Statistiques des domaines
+    domain_stats = {}
+    if domains:
+        domain_counter = Counter(domains)
+        domain_stats = dict(domain_counter.most_common(5))
+    
+    # Longueur moyenne des usernames
+    avg_username_len = round(np.mean([len(u) for u in usernames]), 1) if usernames else 0
+    
+    # Score de qualité moyen
+    scores_qualite = [extract_features(email)[-1] for email in emails]
+    score_qualite_moyen = round(np.mean(scores_qualite), 2) if scores_qualite else 0
+    
+    return {
+        'total_emails': len(emails),
+        'domaines_populaires': domain_stats,
+        'longueur_moyenne_username': avg_username_len,
+        'patterns_erreurs': patterns_erreurs,
+        'score_qualite_moyen': score_qualite_moyen
+    }
 
 def valider_fichier(fichier_path):
     """Valide un fichier d'emails et retourne les résultats améliorés"""
@@ -311,7 +485,7 @@ def valider_fichier(fichier_path):
         
         # Valider chaque email
         for email in emails:
-            if email and len(email) > 3:
+            if email and len(email) > 0:
                 resultat = valider_email_unique(email)
                 resultats_detailles.append(resultat)
                 
@@ -320,9 +494,12 @@ def valider_fichier(fichier_path):
                 else:
                     emails_invalides.append(email)
         
-        # NOUVEAU: Statistiques améliorées
-        scores_qualite = [r['score_qualite'] for r in resultats_detailles]
+        # Statistiques améliorées
+        scores_qualite = [r['score_qualite'] for r in resultats_detailles if r['score_qualite'] > 0]
         suggestions_total = sum(1 for r in resultats_detailles if r['suggestions_correction'])
+        
+        # AJOUT DU MODE EXPERT - Statistiques avancées
+        statistiques_avancees = analyser_statistiques_avancees(emails)
         
         return {
             'total': len(emails),
@@ -332,10 +509,11 @@ def valider_fichier(fichier_path):
             'emails_valides': emails_valides,
             'emails_invalides': emails_invalides,
             'resultats_detailles': resultats_detailles,
-            # NOUVELLES STATISTIQUES
             'score_qualite_moyen': round(np.mean(scores_qualite), 2) if scores_qualite else 0,
             'emails_corrigeables': suggestions_total,
-            'taux_corrigeable': round(suggestions_total / len(emails) * 100, 2) if emails else 0
+            'taux_corrigeable': round(suggestions_total / len(emails) * 100, 2) if emails else 0,
+            # NOUVEAU: Statistiques Mode Expert
+            'statistiques_avancees': statistiques_avancees
         }
     except Exception as e:
         raise Exception(f"Erreur lecture fichier: {str(e)}")
@@ -360,37 +538,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 # -----------------------------
-# NOUVELLE ROUTE POUR LA CORRECTION
-# -----------------------------
-
-@app.route('/corriger-email', methods=['POST'])
-def corriger_email():
-    """API dédiée à la correction d'emails"""
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'erreur': 'Données JSON requises'}), 400
-            
-        email = data.get('email', '').strip()
-        
-        if not email:
-            return jsonify({'erreur': 'Email requis'}), 400
-        
-        suggestions = corrector.suggest_corrections(email)
-        best_suggestion = suggestions[0] if suggestions else None
-        
-        return jsonify({
-            'email_original': email,
-            'suggestions': suggestions,
-            'meilleure_suggestion': best_suggestion,
-            'score_confiance': corrector._calculate_confidence(best_suggestion) if best_suggestion else 0,
-            'nombre_suggestions': len(suggestions)
-        })
-    except Exception as e:
-        return jsonify({'erreur': str(e)}), 500
-
-# -----------------------------
-# ROUTES FLASK EXISTANTES (MODIFIÉES)
+# ROUTES FLASK
 # -----------------------------
 
 @app.route('/')
@@ -416,9 +564,36 @@ def valider_email_api():
     except Exception as e:
         return jsonify({'erreur': str(e)}), 500
 
+@app.route('/corriger-email', methods=['POST'])
+def corriger_email():
+    """API dédiée à la correction d'emails"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'erreur': 'Données JSON requises'}), 400
+            
+        email = data.get('email', '').strip()
+        
+        if not email:
+            return jsonify({'erreur': 'Email requis'}), 400
+        
+        suggestions = corrector.suggest_corrections(email)
+        best_suggestion = suggestions[0] if suggestions else None
+        
+        return jsonify({
+            'email_original': email,
+            'suggestions': suggestions[:5],  # Limiter à 5 suggestions
+            'meilleure_suggestion': best_suggestion,
+            'score_confiance': corrector._calculate_confidence(best_suggestion) if best_suggestion else 0,
+            'nombre_suggestions': len(suggestions),
+            'diagnostic': _get_email_diagnostic(email)
+        })
+    except Exception as e:
+        return jsonify({'erreur': str(e)}), 500
+
 @app.route('/importer-fichier', methods=['POST'])
 def importer_fichier():
-    """API pour importer et valider un fichier d'emails (version améliorée)"""
+    """API pour importer et valider un fichier d'emails"""
     if 'fichier' not in request.files:
         return jsonify({'erreur': 'Aucun fichier uploadé'}), 400
     
@@ -427,11 +602,9 @@ def importer_fichier():
     if fichier.filename == '':
         return jsonify({'erreur': 'Aucun fichier sélectionné'}), 400
     
-    # Vérifier l'extension du fichier
     if not allowed_file(fichier.filename):
         return jsonify({
-            'erreur': 'Type de fichier non autorisé. Seuls les fichiers .txt et .csv sont acceptés.',
-            'type_fichier': fichier.filename.split('.')[-1].lower() if '.' in fichier.filename else 'inconnu'
+            'erreur': 'Type de fichier non autorisé. Seuls les fichiers .txt et .csv sont acceptés.'
         }), 400
     
     if fichier and allowed_file(fichier.filename):
@@ -451,7 +624,7 @@ def importer_fichier():
                 os.remove(filepath)
             return jsonify({'erreur': f'Erreur lors du traitement: {str(e)}'}), 500
     else:
-        return jsonify({'erreur': 'Type de fichier non autorisé. Utilisez .txt ou .csv'}), 400
+        return jsonify({'erreur': 'Type de fichier non autorisé'}), 400
 
 @app.route('/telecharger-resultat', methods=['POST'])
 def telecharger_resultat():
@@ -509,4 +682,9 @@ if __name__ == '__main__':
     print("🌐 Lancement de l'application de validation d'emails intelligente...")
     print("📧 Accédez à l'interface sur: http://localhost:5000")
     print("🤖 Correcteur intelligent activé avec détection de fautes de frappe")
+    print("💡 Fonctionnalités améliorées :")
+    print("   - Correction des emails avec parties manquantes")
+    print("   - Diagnostic détaillé des erreurs")
+    print("   - Suggestions intelligentes contextuelles")
+    print("   - 🔍 MODE EXPERT avec statistiques avancées")
     app.run(debug=True, host='0.0.0.0', port=5000)
