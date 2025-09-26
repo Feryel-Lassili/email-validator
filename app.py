@@ -444,17 +444,18 @@ def analyser_statistiques_avancees(emails):
     # Longueur moyenne des usernames
     avg_username_len = round(np.mean([len(u) for u in usernames]), 1) if usernames else 0
     
-    # Score de qualité moyen
-    scores_qualite = [extract_features(email)[-1] for email in emails]
-    score_qualite_moyen = round(np.mean(scores_qualite), 2) if scores_qualite else 0
-    
+    # Score de taux de correction 
+    emails_corrigeables = sum(1 for email in emails if corrector.suggest_corrections(email))
+    taux_correction = round((emails_corrigeables / len(emails)) * 100, 1) if emails else 0
+
     return {
-        'total_emails': len(emails),
-        'domaines_populaires': domain_stats,
-        'longueur_moyenne_username': avg_username_len,
-        'patterns_erreurs': patterns_erreurs,
-        'score_qualite_moyen': score_qualite_moyen
-    }
+    'total_emails': len(emails),
+    'domaines_populaires': domain_stats,
+    'longueur_moyenne_username': avg_username_len,
+    'patterns_erreurs': patterns_erreurs,
+    'taux_correction': taux_correction  # ← Nouvelle métrique utile
+}
+    
 
 def valider_fichier(fichier_path):
     """Valide un fichier d'emails et retourne les résultats améliorés"""

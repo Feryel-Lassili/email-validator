@@ -588,9 +588,10 @@
                         <h3 style="text-align: center; margin-bottom: 20px;">🔍 MODE EXPERT - ANALYSE AVANCÉE</h3>
                         
                         <div class="expert-stats">
+                            <!-- CHANGEMENT: Remplacé "Score qualité moyen" par "Emails corrigeables" -->
                             <div class="expert-stat">
-                                <span class="number" id="expertScoreQualite">0</span>
-                                <span class="label">Score qualité moyen</span>
+                                <span class="number" id="expertTauxCorrection">0%</span>
+                                <span class="label">Emails corrigeables</span>
                             </div>
                             <div class="expert-stat">
                                 <span class="number" id="expertLongueurUsername">0</span>
@@ -703,7 +704,11 @@
         function afficherStatistiquesExpert() {
             if (!statistiquesExpert) return;
             
-            document.getElementById('expertScoreQualite').textContent = statistiquesExpert.score_qualite_moyen;
+            // CHANGEMENT: Affichage du taux de correction au lieu du score qualité
+            const emailsCorrigeables = resultatsFichier.filter(r => !r.valide && r.correction_automatique).length;
+            const tauxCorrection = resultatsFichier.length > 0 ? Math.round((emailsCorrigeables / resultatsFichier.length) * 100) : 0;
+            document.getElementById('expertTauxCorrection').textContent = tauxCorrection + '%';
+            
             document.getElementById('expertLongueurUsername').textContent = statistiquesExpert.longueur_moyenne_username;
             document.getElementById('expertTotalEmails').textContent = statistiquesExpert.total_emails;
             
