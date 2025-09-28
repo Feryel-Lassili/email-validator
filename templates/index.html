@@ -1,475 +1,242 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Validateur d'Emails Intelligent - Esprit</title>
+    <title>Email Validator Pro - Validation Intelligente d'Emails</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333333;
-            background: #f8f9fa;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             min-height: 100vh;
-            padding: 20px;
+            color: #000;
+            overflow-x: hidden;
         }
         
         .container {
-            max-width: 900px;
-            margin: 0 auto;
+            max-width: 1000px;
+            margin: 20px auto;
             background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             overflow: hidden;
+            animation: slideIn 0.6s ease-out;
+            border: 1px solid #e0e0e0;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .header {
-            background: #ffffff;
-            color: #333333;
-            padding: 30px;
+            background: #000;
+            color: #fff;
+            padding: 40px;
             text-align: center;
-            border-bottom: 1px solid #e0e0e0;
+            position: relative;
+            overflow: hidden;
         }
         
         .header h1 {
-            font-size: 2.2em;
+            font-size: 3em;
             margin-bottom: 10px;
-            color: #333333;
-            font-weight: 600;
+            font-weight: 700;
+            color: #fff;
         }
         
         .header p {
-            font-size: 1.1em;
-            color: #666666;
+            font-size: 1.2em;
+            opacity: 0.9;
+            color: #fff;
         }
         
-        .tab-container {
-            padding: 0;
+        .main-content {
+            padding: 40px;
         }
         
         .tabs {
             display: flex;
             background: #f8f9fa;
-            border-bottom: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 30px;
+            border: 1px solid #dee2e6;
         }
         
         .tab {
             flex: 1;
-            padding: 20px;
-            background: #f8f9fa;
+            padding: 15px 30px;
             border: none;
+            background: transparent;
             cursor: pointer;
             font-size: 1em;
-            font-weight: 500;
-            color: #666666;
+            font-weight: 600;
+            color: #6c757d;
+            border-radius: 8px;
             transition: all 0.3s ease;
-            border-bottom: 2px solid transparent;
         }
         
         .tab:hover {
-            background: #e9ecef;
-            color: #333333;
+            color: #000;
+            background: rgba(0, 0, 0, 0.05);
         }
         
         .tab.active {
-            color: #d32f2f;
-            border-bottom-color: #d32f2f;
-            background: #ffffff;
-            font-weight: 600;
+            background: #000;
+            color: #fff;
         }
         
         .tab-content {
             display: none;
-            padding: 30px;
-            background: #ffffff;
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .tab-content.active {
             display: block;
         }
         
+        .upload-section {
+            background: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            border: 2px solid #000;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .upload-section h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+            color: #000;
+            font-weight: 700;
+        }
+        
+        .upload-section p {
+            font-size: 1.1em;
+            color: #6c757d;
+            margin-bottom: 30px;
+        }
+        
         .form-group {
-            margin-bottom: 20px;
+            margin: 30px 0;
+            text-align: left;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         label {
             display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #333333;
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #000;
         }
         
-        input, select {
+        .file-input,
+        .text-input {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 15px 20px;
+            border: 2px solid #000;
+            border-radius: 8px;
+            background: #fff;
             font-size: 1em;
             transition: all 0.3s ease;
-            background: #ffffff;
-            color: #333333;
+            color: #000;
+            font-family: inherit;
         }
         
-        input:focus, select:focus {
+        .file-input:focus,
+        .text-input:focus {
             outline: none;
-            border-color: #d32f2f;
-            box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.1);
+            border-color: #dc3545;
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
         }
         
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #d32f2f;
-            color: #ffffff;
+        .file-name {
+            margin-top: 12px;
+            font-style: italic;
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        
+        .upload-btn {
+            background: #dc3545;
+            color: white;
             border: none;
-            border-radius: 4px;
+            padding: 16px 40px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
             cursor: pointer;
-            font-size: 1em;
-            font-weight: 500;
             transition: all 0.3s ease;
-            margin-bottom: 10px;
+            margin: 25px 0;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
         }
         
-        button:hover {
-            background: #b71c1c;
-            transform: translateY(-1px);
+        .upload-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
         }
         
-        button:active {
-            transform: translateY(0);
+        .upload-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
-        .resultat {
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 6px;
-            animation: fadeIn 0.5s ease;
-            border: 1px solid #e0e0e0;
-            background: #f8f9fa;
-        }
-        
-        .valide {
-            border-left: 4px solid #28a745;
-        }
-        
-        .invalide {
-            border-left: 4px solid #d32f2f;
-        }
-        
-        .statistiques {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 6px;
-            margin: 20px 0;
-            text-align: center;
-            border: 1px solid #e0e0e0;
-        }
-        
-        .statistiques h4 {
-            margin-bottom: 15px;
-            color: #333333;
-            font-weight: 600;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        .stat-item {
-            background: #ffffff;
-            padding: 15px;
-            border-radius: 4px;
-            border: 1px solid #e0e0e0;
-        }
-        
-        .stat-number {
-            font-size: 1.8em;
-            font-weight: bold;
-            display: block;
-        }
-        
-        .stat-valid {
-            color: #28a745;
-        }
-        
-        .stat-invalid {
-            color: #d32f2f;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: #ffffff;
-            border-radius: 4px;
-            overflow: hidden;
-            border: 1px solid #e0e0e0;
-        }
-        
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-            color: #333333;
-        }
-        
-        th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #333333;
-        }
-        
-        tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .chargement {
+        .loading {
             display: none;
             text-align: center;
-            padding: 30px;
-            color: #666666;
+            padding: 50px;
+            background: #fff;
+            border-radius: 15px;
+            margin: 30px 0;
+            border: 2px solid #000;
         }
         
         .spinner {
-            border: 3px solid #f8f9fa;
-            border-top: 3px solid #d32f2f;
+            border: 4px solid #f8f9fa;
+            border-top: 4px solid #dc3545;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 50px;
+            height: 50px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-        
-        .download-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 6px;
-            margin: 20px 0;
-            text-align: center;
-            border: 1px solid #e0e0e0;
-        }
-        
-        .download-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            width: auto;
-            padding: 10px 20px;
-            margin: 0 5px;
-        }
-        
-        .format-select {
-            width: auto;
-            display: inline-block;
-            margin: 0 10px;
-            background: #ffffff;
-            color: #333333;
-            border: 1px solid #ddd;
-        }
-
-        /* Styles pour les fonctionnalités */
-        .suggestions-container {
-            margin-top: 15px;
-            padding: 15px;
-            background: #f0f8ff;
-            border-radius: 6px;
-            border-left: 4px solid #2196F3;
-        }
-        
-        .suggestion-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px;
-            margin: 5px 0;
-            background: white;
-            border-radius: 4px;
-            border: 1px solid #e0e0e0;
-        }
-        
-        .suggestion-email {
-            font-family: monospace;
-            font-weight: bold;
-        }
-        
-        .correction-btn {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9em;
-            margin-left: 10px;
-        }
-        
-        .correction-btn:hover {
-            background: #45a049;
-        }
-        
-        .correction-option {
-            margin-top: 10px;
-            padding: 10px;
-            background: #e8f5e8;
-            border-radius: 4px;
-            border: 1px solid #c8e6c9;
-        }
-
-        .diagnostic-container {
-            margin-top: 15px;
-            padding: 15px;
-            background: #fff3cd;
-            border-radius: 6px;
-            border-left: 4px solid #ffc107;
-        }
-
-        /* NOUVEAU: Styles pour le Mode Expert */
-        .expert-section {
-            margin-top: 20px;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 8px;
-            color: white;
-            display: none;
-        }
-
-        .expert-toggle {
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1em;
-            margin: 10px 0;
-            transition: all 0.3s ease;
-        }
-
-        .expert-toggle:hover {
-            background: #1976D2;
-            transform: translateY(-2px);
-        }
-
-        .expert-toggle.active {
-            background: #ff9800;
-        }
-
-        .expert-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .expert-stat {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 6px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .expert-stat .number {
-            font-size: 2em;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .expert-stat .label {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-
-        .domain-list, .error-patterns {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 6px;
-            margin: 10px 0;
-            backdrop-filter: blur(10px);
-        }
-
-        .domain-item, .error-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .domain-item:last-child, .error-item:last-child {
-            border-bottom: none;
-        }
-
-        .custom-alert {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .alert-content {
-            background: #ffffff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            border: 1px solid #e0e0e0;
-        }
-
-        .alert-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
-            color: #d32f2f;
-        }
-
-        .alert-title {
-            font-size: 1.3em;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #333333;
-        }
-
-        .alert-message {
-            margin-bottom: 20px;
-            line-height: 1.5;
-            color: #666666;
-        }
-
-        .alert-button {
-            background: #d32f2f;
-            color: #ffffff;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 500;
-        }
-
-        .alert-button:hover {
-            background: #b71c1c;
-        }
-
-        small {
-            color: #666666;
-            font-size: 0.9em;
+            margin: 0 auto 25px;
         }
         
         @keyframes spin {
@@ -477,517 +244,367 @@
             100% { transform: rotate(360deg); }
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .results {
+            display: none;
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 30px;
+            border: 2px solid #28a745;
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .results h2 {
+            color: #000;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .results p {
+            margin: 10px 0;
+            font-size: 1.1em;
+            color: #000;
+        }
+        
+        .download-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 15px 0;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+        
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+        
+        .search-results {
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid #000;
+            margin-top: 20px;
+        }
+        
+        .search-results h4 {
+            color: #000;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .search-results p {
+            margin: 8px 0;
+            color: #000;
+        }
+        
+        .search-results a {
+            color: #dc3545;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .search-results a:hover {
+            text-decoration: underline;
         }
         
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
-                border-radius: 6px;
             }
-            
-            .tab-content {
-                padding: 20px;
+            .header {
+                padding: 30px 20px;
             }
-            
             .header h1 {
-                font-size: 1.8em;
+                font-size: 2.2em;
             }
-            
+            .main-content {
+                padding: 30px 20px;
+            }
             .tabs {
                 flex-direction: column;
             }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
+            .tab {
+                margin-bottom: 4px;
             }
-
-            .expert-stats {
-                grid-template-columns: 1fr;
+            .upload-section {
+                padding: 30px 20px;
             }
-
-            .alert-content {
-                padding: 20px;
-                margin: 20px;
-            }
-
-            .download-btn {
-                margin: 10px 0;
+            .upload-btn {
                 width: 100%;
-            }
-
-            .format-select {
-                margin: 10px 0;
-                width: 100%;
+                margin: 15px 0;
             }
         }
     </style>
 </head>
-<body>
-    <div class="custom-alert" id="customAlert">
-        <div class="alert-content">
-            <div class="alert-icon">❌</div>
-            <div class="alert-title" id="alertTitle">Erreur</div>
-            <div class="alert-message" id="alertMessage"></div>
-            <button class="alert-button" onclick="fermerAlerte()">Compris</button>
-        </div>
-    </div>
 
+<body>
     <div class="container">
         <div class="header">
-            <h1> Validateur d'Emails Intelligent</h1>
-            <p>Validez et corrigez automatiquement les emails avec l'IA</p>
+            <h1>Email Validator Pro</h1>
+            <p>Validation intelligente d'emails avec vérification avancée</p>
         </div>
-        
-        <div class="tab-container">
+
+        <div class="main-content">
             <div class="tabs">
-                <button class="tab active" onclick="ouvrirOnglet('unique')"> Valider/Corriger un Email</button>
-                <button class="tab" onclick="ouvrirOnglet('fichier')"> Valider un Fichier</button>
+                <button class="tab active" onclick="switchTab('upload')">Validation CSV</button>
+                <button class="tab" onclick="switchTab('search')">Recherche Username</button>
             </div>
-            
-            <!-- Onglet Email Unique -->
-            <div id="unique" class="tab-content active">
-                <div class="form-group">
-                    <label for="emailInput">Adresse email à valider ou corriger :</label>
-                    <input type="email" id="emailInput" placeholder="Entrez une adresse email (ex: example@gmail.com ou user@gmial.com)" />
-                    <small>Vous pouvez entrer un email valide pour le vérifier, ou un email avec des erreurs pour obtenir des corrections</small>
-                </div>
-                <button onclick="validerEmail()">Valider et Corriger l'email</button>
-                
-                <div id="resultatUnique" class="resultat" style="display: none;"></div>
-            </div>
-            
-            <!-- Onglet Import de Fichier -->
-            <div id="fichier" class="tab-content">
-                <div class="form-group">
-                    <label for="fichierInput">Sélectionnez un fichier :</label>
-                    <input type="file" id="fichierInput" accept=".txt,.csv" />
-                    <small>Formats acceptés: .txt (un email par ligne) ou .csv (colonne contenant les emails)</small>
-                </div>
-                <button onclick="importerFichier()">Valider le fichier</button>
-                
-                <div class="chargement" id="chargementFichier">
+
+            <div id="upload" class="tab-content active">
+                <form action="/upload" method="post" enctype="multipart/form-data" id="uploadForm">
+                    <div class="upload-section">
+                        <h2>Uploader votre fichier CSV</h2>
+                        <p>Obtenez un fichier TXT enrichi avec des emails validés et des données complémentaires</p>
+
+                        <div class="form-group">
+                            <label for="fileInput">Choisir un fichier CSV :</label>
+                            <input type="file" id="fileInput" name="fichier" accept=".csv" class="file-input" required>
+                            <div class="file-name" id="fileName">Aucun fichier sélectionné</div>
+                        </div>
+
+                        <button type="submit" class="upload-btn" id="uploadBtn">
+                            🚀 Lancer la validation
+                        </button>
+                    </div>
+                </form>
+
+                <div class="loading" id="loadingSection">
                     <div class="spinner"></div>
-                    <p>Traitement en cours... Cette opération peut prendre quelques secondes.</p>
+                    <h3>Traitement en cours...</h3>
+                    <p>Validation des emails et génération du rapport TXT</p>
                 </div>
-                
-                <div id="resultatFichier" style="display: none;">
-                    <div class="statistiques" id="statistiques"></div>
-                    
-                    <!-- NOUVEAU: Bouton Mode Expert -->
-                    <div style="text-align: center; margin: 20px 0;">
-                        <button class="expert-toggle" onclick="toggleModeExpert()" id="expertToggle">
-                            🔍 Activer le Mode Expert
+
+                <div class="results" id="resultsSection">
+                    <h2>Traitement terminé avec succès</h2>
+                    <p>Votre fichier a été traité et analysé avec succès.</p>
+                    <button class="download-btn" id="downloadBtn">
+                        📥 Télécharger le rapport TXT
+                    </button>
+                </div>
+            </div>
+
+            <div id="search" class="tab-content">
+                <form action="/search" method="post" id="searchForm">
+                    <div class="upload-section">
+                        <h2>Rechercher un utilisateur</h2>
+                        <p>Entrez un username pour trouver ses profils et email</p>
+
+                        <div class="form-group">
+                            <label for="usernameInput">Username :</label>
+                            <input type="text" id="usernameInput" name="username" class="text-input" placeholder="Ex: Feryel Lassili" required>
+                        </div>
+
+                        <button type="submit" class="upload-btn">
+                            🔍 Lancer la recherche
                         </button>
                     </div>
+                </form>
 
-                    <!-- NOUVEAU: Section Mode Expert -->
-                    <div class="expert-section" id="expertSection">
-                        <h3 style="text-align: center; margin-bottom: 20px;">🔍 MODE EXPERT - ANALYSE AVANCÉE</h3>
-                        
-                        <div class="expert-stats">
-                            <!-- CHANGEMENT: Remplacé "Score qualité moyen" par "Emails corrigeables" -->
-                            <div class="expert-stat">
-                                <span class="number" id="expertTauxCorrection">0%</span>
-                                <span class="label">Emails corrigeables</span>
-                            </div>
-                            <div class="expert-stat">
-                                <span class="number" id="expertLongueurUsername">0</span>
-                                <span class="label">Long. moyenne username</span>
-                            </div>
-                            <div class="expert-stat">
-                                <span class="number" id="expertTotalEmails">0</span>
-                                <span class="label">Emails analysés</span>
-                            </div>
-                        </div>
-
-                        <div class="domain-list">
-                            <h4>📊 Top 5 Domaines</h4>
-                            <div id="domainesListe"></div>
-                        </div>
-
-                        <div class="error-patterns">
-                            <h4>⚠️ Patterns d'Erreurs</h4>
-                            <div id="patternsErreurs"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="download-section">
-                        <h4>📥 Télécharger les résultats</h4>
-                        <select id="formatSortie" class="format-select">
-                            <option value="csv">Format CSV</option>
-                            <option value="txt">Format TXT</option>
-                        </select>
-                        <button class="download-btn" onclick="telechargerResultat()">
-                            Télécharger les emails valides
-                        </button>
-                    </div>
-                    
-                    <div style="max-height: 400px; overflow-y: auto;">
-                        <table id="tableauResultats">
-                            <thead>
-                                <tr>
-                                    <th>Email</th>
-                                    <th>Statut</th>
-                                    <th>Confiance</th>
-                                    <th>Correction suggérée</th>
-                                </tr>
-                            </thead>
-                            <tbody id="corpsTableau"></tbody>
-                        </table>
-                    </div>
+                <div id="searchResults" class="search-results" style="display: none;">
+                    <h3>Résultats de recherche</h3>
+                    <div id="resultsContent"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let resultatsFichier = [];
-        let statistiquesExpert = null;
-        
-        // Fonctions pour l'alerte personnalisée
-        function afficherAlerte(titre, message) {
-            document.getElementById('alertTitle').textContent = titre;
-            document.getElementById('alertMessage').textContent = message;
-            document.getElementById('customAlert').style.display = 'flex';
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('fileInput');
+            const fileName = document.getElementById('fileName');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const uploadForm = document.getElementById('uploadForm');
+            const loadingSection = document.getElementById('loadingSection');
+            const resultsSection = document.getElementById('resultsSection');
+            const downloadBtn = document.getElementById('downloadBtn');
 
-        function fermerAlerte() {
-            document.getElementById('customAlert').style.display = 'none';
-        }
+            // Gestion de l'upload de fichier
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    fileName.textContent = file.name;
 
-        // Fermer l'alerte en cliquant à l'extérieur
-        document.getElementById('customAlert').addEventListener('click', function(e) {
-            if (e.target === this) {
-                fermerAlerte();
-            }
-        });
-
-        function ouvrirOnglet(onglet) {
-            // Cacher tous les onglets
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Afficher l'onglet sélectionné
-            document.getElementById(onglet).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
-        
-        // NOUVELLE FONCTION: Mode Expert
-        function toggleModeExpert() {
-            const expertSection = document.getElementById('expertSection');
-            const expertToggle = document.getElementById('expertToggle');
-            
-            if (expertSection.style.display === 'none') {
-                expertSection.style.display = 'block';
-                expertToggle.textContent = '🔍 Désactiver le Mode Expert';
-                expertToggle.classList.add('active');
-                
-                // Afficher les statistiques expert si disponibles
-                if (statistiquesExpert) {
-                    afficherStatistiquesExpert();
-                }
-            } else {
-                expertSection.style.display = 'none';
-                expertToggle.textContent = '🔍 Activer le Mode Expert';
-                expertToggle.classList.remove('active');
-            }
-        }
-
-        // NOUVELLE FONCTION: Afficher les statistiques expert
-        function afficherStatistiquesExpert() {
-            if (!statistiquesExpert) return;
-            
-            // CHANGEMENT: Affichage du taux de correction au lieu du score qualité
-            const emailsCorrigeables = resultatsFichier.filter(r => !r.valide && r.correction_automatique).length;
-            const tauxCorrection = resultatsFichier.length > 0 ? Math.round((emailsCorrigeables / resultatsFichier.length) * 100) : 0;
-            document.getElementById('expertTauxCorrection').textContent = tauxCorrection + '%';
-            
-            document.getElementById('expertLongueurUsername').textContent = statistiquesExpert.longueur_moyenne_username;
-            document.getElementById('expertTotalEmails').textContent = statistiquesExpert.total_emails;
-            
-            // Afficher les domaines
-            const domainesHtml = Object.entries(statistiquesExpert.domaines_populaires)
-                .map(([domaine, count]) => 
-                    `<div class="domain-item">
-                        <span>${domaine}</span>
-                        <strong>${count}</strong>
-                     </div>`
-                ).join('');
-            document.getElementById('domainesListe').innerHTML = domainesHtml || '<p>Aucun domaine identifié</p>';
-            
-            // Afficher les patterns d'erreurs
-            const erreursHtml = Object.entries(statistiquesExpert.patterns_erreurs)
-                .map(([erreur, count]) => {
-                    const labels = {
-                        'manque_arobase': 'Manque @',
-                        'domaine_manquant': 'Domaine manquant',
-                        'username_manquant': 'Username manquant',
-                        'double_arobase': 'Double @',
-                        'caracteres_invalides': 'Caractères invalides'
-                    };
-                    return `
-                        <div class="error-item">
-                            <span>${labels[erreur] || erreur}</span>
-                            <strong style="color: ${count > 0 ? '#ff6b6b' : '#51cf66'}">${count}</strong>
-                         </div>`;
-                }).join('');
-            document.getElementById('patternsErreurs').innerHTML = erreursHtml;
-        }
-        
-        async function validerEmail() {
-            const email = document.getElementById('emailInput').value.trim();
-            const resultatDiv = document.getElementById('resultatUnique');
-            
-            if (!email) {
-                afficherAlerte('Champ vide', 'Veuillez entrer une adresse email à valider.');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/valider-email', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email: email })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    let html = `
-                        <h3>Résultat pour : ${data.email}</h3>
-                        <div class="${data.valide ? 'valide' : 'invalide'}">
-                            <h4>${data.valide ? '✅ EMAIL VALIDE' : '❌ EMAIL INVALIDE'}</h4>
-                            <p><strong>Probabilité d'être valide :</strong> ${data.probabilite_valide}%</p>
-                            <p><strong>Probabilité d'être invalide :</strong> ${data.probabilite_invalide}%</p>
-                    `;
-                    
-                    // AFFICHER LES SUGGESTIONS UNIQUEMENT SI L'EMAIL EST INVALIDE
-                    if (!data.valide) {
-                        if (data.correction_automatique) {
-                            html += `
-                                <div class="correction-option">
-                                    <p><strong>✅ CORRECTION SUGGÉRÉE :</strong> ${data.correction_automatique}</p>
-                                    <button class="correction-btn" onclick="utiliserCorrection('${data.correction_automatique}')">
-                                        Utiliser cette correction
-                                    </button>
-                                </div>
-                            `;
-                        }
-                        
-                        if (data.suggestions_correction && data.suggestions_correction.length > 0) {
-                            html += `
-                                <div class="suggestions-container">
-                                    <h4>💡 Autres suggestions :</h4>
-                                    ${data.suggestions_correction.map(suggestion => `
-                                        <div class="suggestion-item">
-                                            <span class="suggestion-email">${suggestion}</span>
-                                            <button class="correction-btn" onclick="utiliserCorrection('${suggestion}')">
-                                                Utiliser
-                                            </button>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `;
-                        }
+                    if (!file.name.toLowerCase().endsWith('.csv')) {
+                        alert('Veuillez sélectionner un fichier CSV');
+                        fileInput.value = '';
+                        fileName.textContent = 'Aucun fichier sélectionné';
                     }
-                    
-                    // AFFICHER LE DIAGNOSTIC
-                    if (data.diagnostic && data.diagnostic.length > 0) {
-                        html += `
-                            <div class="diagnostic-container">
-                                <h4>🔍 DIAGNOSTIC :</h4>
-                                ${data.diagnostic.map(diag => `<p style="margin: 5px 0;">${diag}</p>`).join('')}
-                            </div>
-                        `;
-                    }
-                    
-                    html += `</div>`;
-                    resultatDiv.innerHTML = html;
-                    resultatDiv.style.display = 'block';
                 } else {
-                    resultatDiv.innerHTML = `<div class="invalide"><strong>Erreur :</strong> ${data.erreur}</div>`;
-                    resultatDiv.style.display = 'block';
+                    fileName.textContent = 'Aucun fichier sélectionné';
                 }
-            } catch (error) {
-                resultatDiv.innerHTML = `<div class="invalide"><strong>Erreur :</strong> ${error.message}</div>`;
-                resultatDiv.style.display = 'block';
-            }
-        }
-        
-        async function importerFichier() {
-            const fichierInput = document.getElementById('fichierInput');
-            const chargement = document.getElementById('chargementFichier');
-            const resultatDiv = document.getElementById('resultatFichier');
-            
-            if (!fichierInput.files[0]) {
-                afficherAlerte('Aucun fichier sélectionné', 'Veuillez sélectionner un fichier à valider.');
-                return;
-            }
-            
-            const file = fichierInput.files[0];
-            const fileName = file.name.toLowerCase();
-            
-            if (!fileName.endsWith('.txt') && !fileName.endsWith('.csv')) {
-                const fileExtension = fileName.split('.').pop() || 'inconnu';
-                afficherAlerte(
-                    'Type de fichier non autorisé',
-                    `Le fichier "${file.name}" n'est pas supporté.\n\nFormats acceptés : .txt, .csv\nVotre fichier : .${fileExtension}`
-                );
-                fichierInput.value = '';
-                return;
-            }
-            
-            const formData = new FormData();
-            formData.append('fichier', file);
-            
-            chargement.style.display = 'block';
-            resultatDiv.style.display = 'none';
-            
-            try {
-                const response = await fetch('/importer-fichier', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                chargement.style.display = 'none';
-                
-                if (response.ok) {
-                    resultatsFichier = data.resultats_detailles;
-                    statistiquesExpert = data.statistiques_avancees; // NOUVEAU: Stocker les stats expert
-                    
-                    // Statistiques standard
-                    document.getElementById('statistiques').innerHTML = `
-                        <h4>📊 Statistiques du fichier</h4>
-                        <div class="stats-grid">
-                            <div class="stat-item">
-                                <span class="stat-number">${data.total}</span>
-                                <span>Emails analysés</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number stat-valid">${data.valides}</span>
-                                <span>Emails valides</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number stat-invalid">${data.invalides}</span>
-                                <span>Emails invalides</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number">${data.taux_validite}%</span>
-                                <span>Taux de validité</span>
-                            </div>
-                        </div>
-                    `;
-                    
-                    // Tableau simplifié sans score qualité
-                    const corpsTableau = document.getElementById('corpsTableau');
-                    corpsTableau.innerHTML = '';
-                    
-                    data.resultats_detailles.forEach(resultat => {
-                        const ligne = document.createElement('tr');
-                        // Afficher la correction uniquement si l'email est invalide
-                        const correction = !resultat.valide ? 
-                            (resultat.correction_automatique || 
-                             (resultat.suggestions_correction && resultat.suggestions_correction[0]) || 
-                             'Aucune') : '-';
-                         
-                        ligne.innerHTML = `
-                            <td>${resultat.email}</td>
-                            <td>${resultat.valide ? '✅ Valide' : '❌ Invalide'}</td>
-                            <td>${resultat.confiance}%</td>
-                            <td>${correction}</td>
-                        `;
-                        corpsTableau.appendChild(ligne);
-                    });
-                    
-                    resultatDiv.style.display = 'block';
-                } else {
-                    afficherAlerte('Erreur de traitement', data.erreur);
+            });
+
+            uploadForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                if (!fileInput.files[0]) {
+                    alert('Veuillez sélectionner un fichier CSV');
+                    return;
                 }
-            } catch (error) {
-                chargement.style.display = 'none';
-                afficherAlerte('Erreur réseau', 'Impossible de contacter le serveur. Vérifiez votre connexion.');
-            }
-        }
-        
-        function utiliserCorrection(correction) {
-            document.getElementById('emailInput').value = correction;
-            validerEmail();
-        }
-        
-        async function telechargerResultat() {
-            const emailsValides = resultatsFichier
-                .filter(r => r.valide)
-                .map(r => r.email);
-            
-            if (emailsValides.length === 0) {
-                afficherAlerte('Aucun email valide', 'Il n\'y a aucun email valide à télécharger.');
-                return;
-            }
-            
-            const format = document.getElementById('formatSortie').value;
-            
-            try {
-                const response = await fetch('/telecharger-resultat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        emails_valides: emailsValides,
-                        format: format
+
+                loadingSection.style.display = 'block';
+                resultsSection.style.display = 'none';
+                uploadBtn.disabled = true;
+                uploadBtn.textContent = '⏳ Traitement en cours...';
+
+                const formData = new FormData(uploadForm);
+
+                fetch('/upload', {
+                        method: 'POST',
+                        body: formData
                     })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    const blob = new Blob([data.contenu], { type: 'text/plain' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = data.nom_fichier;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                } else {
-                    afficherAlerte('Erreur de téléchargement', data.erreur);
+                    .then(response => {
+                        if (response.ok) {
+                            return response.blob();
+                        }
+                        throw new Error('Erreur lors du traitement');
+                    })
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        downloadBtn.onclick = function() {
+                            const a = document.createElement('a');
+                            a.href = url;
+                            const nomFichier = `rapport_emails_${new Date().toISOString().slice(0,10)}.txt`;
+                            a.download = nomFichier;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                        };
+
+                        loadingSection.style.display = 'none';
+                        resultsSection.style.display = 'block';
+                        uploadBtn.disabled = false;
+                        uploadBtn.textContent = '🚀 Lancer la validation';
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        loadingSection.style.display = 'none';
+                        alert('Erreur lors du traitement: ' + error.message);
+                        uploadBtn.disabled = false;
+                        uploadBtn.textContent = '🚀 Lancer la validation';
+                    });
+            });
+
+            // Gestion des onglets
+            window.switchTab = function(tabName) {
+                const tabs = document.querySelectorAll('.tab');
+                const contents = document.querySelectorAll('.tab-content');
+
+                tabs.forEach(tab => tab.classList.remove('active'));
+                contents.forEach(content => content.classList.remove('active'));
+
+                document.querySelector(`button[onclick="switchTab('${tabName}')"]`).classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+            };
+
+            // Gestion de la recherche
+            const searchForm = document.getElementById('searchForm');
+            const searchResults = document.getElementById('searchResults');
+            const resultsContent = document.getElementById('resultsContent');
+
+            searchForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const username = document.getElementById('usernameInput').value.trim();
+                if (!username) {
+                    alert('Veuillez entrer un username');
+                    return;
                 }
-            } catch (error) {
-                afficherAlerte('Erreur réseau', 'Impossible de télécharger le fichier.');
-            }
-        }
-        
-        // Gestionnaires d'événements
-        document.getElementById('emailInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') validerEmail();
-        });
-        
-        document.getElementById('fichierInput').addEventListener('change', function(e) {
-            if (e.target.files[0]) {
-                const file = e.target.files[0];
-                const fileName = file.name.toLowerCase();
-                
-                if (!fileName.endsWith('.txt') && !fileName.endsWith('.csv')) {
-                    const fileExtension = fileName.split('.').pop() || 'inconnu';
-                    afficherAlerte(
-                        'Type de fichier non autorisé',
-                        `Le fichier "${file.name}" ne sera pas accepté. Formats acceptés : .txt, .csv`
-                    );
-                    e.target.value = '';
-                }
-            }
+
+                const searchBtn = searchForm.querySelector('.upload-btn');
+                searchBtn.disabled = true;
+                searchBtn.textContent = '🔍 Recherche en cours...';
+
+                fetch('/search', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `username=${encodeURIComponent(username)}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        let html = '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6;">';
+                        html += `<h4 style="color: #000; margin-bottom: 15px;">Résultats pour "${data.username}"</h4>`;
+
+                        if (data.nom_complet) {
+                            html += `<p><strong>Nom complet:</strong> ${data.nom_complet}</p>`;
+                        }
+
+                        if (data.email) {
+                            html += `<p><strong>Email:</strong> ${data.email}</p>`;
+                        } else {
+                            html += `<p><strong>Email:</strong> Non trouvé</p>`;
+                        }
+
+                        if (data.poste) {
+                            html += `<p><strong>Poste:</strong> ${data.poste}</p>`;
+                        }
+
+                        if (data.entreprise) {
+                            html += `<p><strong>Entreprise:</strong> ${data.entreprise}</p>`;
+                        }
+
+                        if (data.site_web) {
+                            html += `<p><strong>Site web:</strong> <a href="${data.site_web}" target="_blank">${data.site_web}</a></p>`;
+                        }
+
+                        if (data.ville) {
+                            html += `<p><strong>Ville:</strong> ${data.ville}</p>`;
+                        }
+
+                        if (data.pays) {
+                            html += `<p><strong>Pays:</strong> ${data.pays}</p>`;
+                        }
+
+                        if (data.github) {
+                            html += `<p><strong>GitHub:</strong> <a href="${data.github}" target="_blank">${data.github}</a></p>`;
+                        } else {
+                            html += `<p><strong>GitHub:</strong> Non trouvé</p>`;
+                        }
+
+                        if (data.linkedin) {
+                            html += `<p><strong>LinkedIn:</strong> <a href="${data.linkedin}" target="_blank">${data.linkedin}</a></p>`;
+                        } else {
+                            html += `<p><strong>LinkedIn:</strong> Non trouvé</p>`;
+                        }
+
+                        html += '</div>';
+
+                        resultsContent.innerHTML = html;
+                        searchResults.style.display = 'block';
+                        searchBtn.disabled = false;
+                        searchBtn.textContent = '🔍 Lancer la recherche';
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        alert('Erreur lors de la recherche: ' + error.message);
+                        searchBtn.disabled = false;
+                        searchBtn.textContent = '🔍 Lancer la recherche';
+                    });
+            });
         });
     </script>
 </body>
+
 </html>

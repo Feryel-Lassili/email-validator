@@ -9,13 +9,12 @@ def ouvrir_navigateur():
     time.sleep(2)  # Attendre que le serveur démarre
     webbrowser.open('http://localhost:5000')
 
-if __name__ == '_main_':
+if __name__ == '__main__':
 
     print("Démarrage de l'application de validation d'emails...")
     print("Patientez pendant le chargement...")
 
-    print(" Démarrage de l'application de validation d'emails...")
-    print(" Patientez pendant le chargement...")
+    
 
     
     # Ouvrir le navigateur automatiquement
