@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Application Flask de validation d'emails avec IA - VERSION COMPLÈTE FONCTIONNELLE
+Application Flask de validation d'emails avec IA - VERSION OPTIMISÉE
 """
 
 import re
@@ -595,8 +595,78 @@ def verifier_email_hunter(email):
         prediction = model.predict([features])[0]
         return bool(prediction == 1), 50
 
+def enrichir_profil_par_username(username):
+    """Enrichit un profil à partir d'un username"""
+    result = {
+        'nom_complet': None,
+        'poste': None,
+        'entreprise': None,
+        'site_web': None,
+        'ville': None,
+        'pays': None,
+        'linkedin': None,
+        'github': None
+    }
+    
+    # GitHub
+    try:
+        api_url = f"https://api.github.com/users/{username}"
+        response = requests.get(api_url, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            result['github'] = data.get('html_url')
+            result['nom_complet'] = data.get('name')
+            result['site_web'] = data.get('blog') or data.get('html_url')
+            result['ville'] = data.get('location')
+            bio = data.get('bio', '')
+            if bio:
+                entreprise_match = re.search(r'@([A-Za-z0-9_-]+)', bio)
+                if entreprise_match:
+                    result['entreprise'] = entreprise_match.group(1)
+    except Exception as e:
+        print(f"Erreur GitHub pour {username}: {e}")
+    
+    # LinkedIn
+    try:
+        query = f'site:linkedin.com/in "{username}"'
+        url = f"https://serpapi.com/search.json?engine=google&q={query}&api_key={SERPAPI_KEY}"
+        response = requests.get(url, timeout=10)
+        data = response.json()
+        
+        if 'organic_results' in data and data['organic_results']:
+            for res in data['organic_results'][:3]:
+                link = res.get('link', '')
+                title = res.get('title', '')
+                snippet = res.get('snippet', '')
+                if 'linkedin.com/in/' in link:
+                    result['linkedin'] = link
+                    # Extraire infos du titre et snippet
+                    if ' - ' in title:
+                        parts = title.split(' - ')
+                        if len(parts) >= 2:
+                            result['nom_complet'] = result['nom_complet'] or parts[0].strip()
+                            result['poste'] = parts[1].strip()
+                    # Chercher entreprise dans snippet
+                    if snippet:
+                        entreprise_patterns = [
+                            r'chez ([^|•\n]+)',
+                            r'at ([^|•\n]+)',
+                            r'([A-Z][a-zA-Z\s&]+) \|',
+                            r'• ([A-Z][a-zA-Z\s&]+)'
+                        ]
+                        for pattern in entreprise_patterns:
+                            match = re.search(pattern, snippet)
+                            if match:
+                                result['entreprise'] = result['entreprise'] or match.group(1).strip()
+                                break
+                    break
+    except Exception as e:
+        print(f"Erreur LinkedIn pour {username}: {e}")
+    
+    return result
+
 def traiter_ligne_email(email):
-    """Traitement avec APIs réelles et enrichissement complet"""
+    """Traitement avec APIs réelles et enrichissement complet - VERSION OPTIMISÉE"""
     email = email.strip()
     
     if not email or email == 'nan':
@@ -634,70 +704,19 @@ def traiter_ligne_email(email):
         if hunter_valide:
             # Enrichissement seulement si l'email est valide
             username = email.split('@')[0]
-            name = username.replace('.', ' ').title()
-            domain = email.split('@')[1]
             
-            # GitHub
-            try:
-                api_url = f"https://api.github.com/users/{username}"
-                response = requests.get(api_url, timeout=10)
-                if response.status_code == 200:
-                    data = response.json()
-                    result['github'] = data.get('html_url')
-                    result['nom_complet'] = data.get('name') or result.get('nom_complet')
-                    result['site_web'] = data.get('blog') or data.get('html_url')
-                    result['ville'] = data.get('location')
-                    bio = data.get('bio', '')
-                    if bio:
-                        entreprise_match = re.search(r'@([A-Za-z0-9_-]+)', bio)
-                        if entreprise_match:
-                            result['entreprise'] = entreprise_match.group(1)
-            except Exception as e:
-                print(f"Erreur GitHub pour {email}: {e}")
+            # Enrichir le profil avec les données du username
+            profil_enrichi = enrichir_profil_par_username(username)
             
-            # LinkedIn
-            try:
-                if domain == 'esprit.tn':
-                    query = f'site:linkedin.com/in "{name}" esprit tunisie'
-                else:
-                    query = f'site:linkedin.com/in "{name}"'
-                url = f"https://serpapi.com/search.json?engine=google&q={query}&api_key={SERPAPI_KEY}"
-                response = requests.get(url, timeout=10)
-                data = response.json()
-                
-                if 'organic_results' in data and data['organic_results']:
-                    for res in data['organic_results'][:3]:
-                        link = res.get('link', '')
-                        title = res.get('title', '')
-                        snippet = res.get('snippet', '')
-                        if 'linkedin.com/in/' in link:
-                            result['linkedin'] = link
-                            # Extraire infos
-                            if ' - ' in title:
-                                parts = title.split(' - ')
-                                if len(parts) >= 2:
-                                    result['nom_complet'] = parts[0].strip()
-                                    result['poste'] = parts[1].strip()
-                            if snippet:
-                                entreprise_patterns = [
-                                    r'chez ([^|•\n]+)',
-                                    r'at ([^|•\n]+)',
-                                    r'([A-Z][a-zA-Z\s&]+) \|',
-                                    r'• ([A-Z][a-zA-Z\s&]+)'
-                                ]
-                                for pattern in entreprise_patterns:
-                                    match = re.search(pattern, snippet)
-                                    if match:
-                                        result['entreprise'] = match.group(1).strip()
-                                        break
-                            break
-            except Exception as e:
-                print(f"Erreur LinkedIn pour {email}: {e}")
+            # Mettre à jour le résultat avec les données enrichies
+            for key, value in profil_enrichi.items():
+                if value and not result.get(key):  # Ne pas écraser les données existantes
+                    result[key] = value
     
     return result
 
 def generer_fichier_txt(df):
-    """Génère un fichier TXT bien formaté et lisible"""
+    """Génère un fichier TXT optimisé - VERSION AMÉLIORÉE"""
     lignes = []
     
     lignes.append("=" * 60)
@@ -717,34 +736,48 @@ def generer_fichier_txt(df):
         lignes.append(f"Score IA:    {row.get('score_ia', 'N/A')}%")
         lignes.append(f"Score Hunter:{row.get('score_hunter', 'N/A')}%")
         
-        # Afficher le diagnostic IA
-        if row.get('diagnostic_ia'):
+        # Afficher le diagnostic IA SEULEMENT si email invalide
+        if row.get('statut') == 'invalide' and row.get('diagnostic_ia'):
             lignes.append("Diagnostic IA:")
             for diag in row['diagnostic_ia']:
                 lignes.append(f"  {diag}")
         
-        # Afficher les suggestions IA
-        if row.get('suggestions_ia'):
+        # Afficher les suggestions IA SEULEMENT si email invalide
+        if row.get('statut') == 'invalide' and row.get('suggestions_ia'):
             lignes.append("Suggestions IA:")
             for sugg in row['suggestions_ia']:
                 lignes.append(f"  - {sugg}")
         
-        if row.get('nom_complet'):
-            lignes.append(f"Nom:         {row['nom_complet']}")
-        if row.get('poste'):
-            lignes.append(f"Poste:       {row['poste']}")
-        if row.get('entreprise'):
-            lignes.append(f"Entreprise:  {row['entreprise']}")
-        if row.get('site_web'):
-            lignes.append(f"Site web:    {row['site_web']}")
-        if row.get('ville'):
-            lignes.append(f"Ville:       {row['ville']}")
-        if row.get('pays'):
-            lignes.append(f"Pays:        {row['pays']}")
-        if row.get('linkedin'):
-            lignes.append(f"LinkedIn:    {row['linkedin']}")
-        if row.get('github'):
-            lignes.append(f"GitHub:      {row['github']}")
+        # ENRICHISSEMENT DES DONNÉES pour emails valides
+        if row.get('statut') == 'actif':
+            lignes.append("📊 PROFIL ENRICHISSÉ:")
+            
+            if row.get('nom_complet'):
+                lignes.append(f"  👤 Nom complet: {row['nom_complet']}")
+            if row.get('poste'):
+                lignes.append(f"  💼 Poste: {row['poste']}")
+            if row.get('entreprise'):
+                lignes.append(f"  🏢 Entreprise: {row['entreprise']}")
+            if row.get('site_web'):
+                lignes.append(f"  🌐 Site web: {row['site_web']}")
+            if row.get('ville'):
+                lignes.append(f"  📍 Ville: {row['ville']}")
+            if row.get('pays'):
+                lignes.append(f"  🗺️ Pays: {row['pays']}")
+            if row.get('linkedin'):
+                lignes.append(f"  💼 LinkedIn: {row['linkedin']}")
+            if row.get('github'):
+                lignes.append(f"  💻 GitHub: {row['github']}")
+            
+            # Vérifier si des données ont été trouvées
+            donnees_trouvees = any([
+                row.get('nom_complet'), row.get('poste'), row.get('entreprise'),
+                row.get('site_web'), row.get('ville'), row.get('pays'),
+                row.get('linkedin'), row.get('github')
+            ])
+            
+            if not donnees_trouvees:
+                lignes.append("  ℹ️  Aucune information supplémentaire trouvée")
         
         lignes.append("")
     
@@ -755,8 +788,15 @@ def generer_fichier_txt(df):
     stats_valides = len(df[df['statut'] == 'actif'])
     stats_invalides = len(df[df['statut'] == 'invalide'])
     
+    # Compter les profils enrichis
+    profils_enrichis = sum(1 for _, row in df.iterrows() 
+                          if row.get('statut') == 'actif' and 
+                          any([row.get('nom_complet'), row.get('poste'), row.get('entreprise'),
+                              row.get('linkedin'), row.get('github')]))
+    
     lignes.append(f"Emails actifs validés:    {stats_valides}")
     lignes.append(f"Emails invalides:         {stats_invalides}")
+    lignes.append(f"Profils enrichis:         {profils_enrichis}")
     lignes.append(f"Total d'emails traités:  {len(df)}")
     lignes.append(f"Score IA moyen:           {df['score_ia'].mean():.1f}%")
     lignes.append("")
@@ -865,63 +905,9 @@ def search_username():
             'pays': None
         }
         
-        # Chercher GitHub avec plus d'infos
-        try:
-            api_url = f"https://api.github.com/users/{username}"
-            response = requests.get(api_url, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                result['github'] = data.get('html_url')
-                result['nom_complet'] = data.get('name')
-                result['site_web'] = data.get('blog') or data.get('html_url')
-                result['ville'] = data.get('location')
-                # Pour entreprise, GitHub n'a pas directement, mais on peut chercher dans bio
-                bio = data.get('bio', '')
-                if bio:
-                    # Extraire entreprise de la bio si mentionnée
-                    entreprise_match = re.search(r'@([A-Za-z0-9_-]+)', bio)
-                    if entreprise_match:
-                        result['entreprise'] = entreprise_match.group(1)
-        except Exception as e:
-            print(f"Erreur GitHub pour {username}: {e}")
-        
-        # Chercher LinkedIn avec plus d'infos
-        try:
-            query = f'site:linkedin.com/in "{username}"'
-            url = f"https://serpapi.com/search.json?engine=google&q={query}&api_key={SERPAPI_KEY}"
-            response = requests.get(url, timeout=10)
-            data = response.json()
-            
-            if 'organic_results' in data and data['organic_results']:
-                for res in data['organic_results'][:3]:
-                    link = res.get('link', '')
-                    title = res.get('title', '')
-                    snippet = res.get('snippet', '')
-                    if 'linkedin.com/in/' in link:
-                        result['linkedin'] = link
-                        # Extraire infos du titre et snippet
-                        if ' - ' in title:
-                            parts = title.split(' - ')
-                            if len(parts) >= 2:
-                                result['nom_complet'] = parts[0].strip()
-                                result['poste'] = parts[1].strip()
-                        # Chercher entreprise dans snippet
-                        if snippet:
-                            # Chercher patterns comme "chez Company" ou "at Company"
-                            entreprise_patterns = [
-                                r'chez ([^|•\n]+)',
-                                r'at ([^|•\n]+)',
-                                r'([A-Z][a-zA-Z\s&]+) \|',
-                                r'• ([A-Z][a-zA-Z\s&]+)'
-                            ]
-                            for pattern in entreprise_patterns:
-                                match = re.search(pattern, snippet)
-                                if match:
-                                    result['entreprise'] = match.group(1).strip()
-                                    break
-                        break
-        except Exception as e:
-            print(f"Erreur LinkedIn pour {username}: {e}")
+        # Utiliser la fonction d'enrichissement existante
+        profil_enrichi = enrichir_profil_par_username(username)
+        result.update(profil_enrichi)
         
         # Chercher email avec plus de méthodes
         try:
@@ -1157,4 +1143,5 @@ if __name__ == '__main__':
     print("   - 🔍 MODE EXPERT avec statistiques avancées")
     print("   - 🧠 INTÉGRATION IA COMPLÈTE")
     print("   - ✅ ANALYSE PAR LOT FONCTIONNELLE")
+    print("   - 📊 ENRICHISSEMENT AUTOMATIQUE DES PROFILS")
     app.run(debug=True, host='0.0.0.0', port=5000)
