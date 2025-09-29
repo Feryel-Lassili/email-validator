@@ -473,6 +473,24 @@
         .quality-medium { background: #fff3cd; color: #856404; }
         .quality-low { background: #f8d7da; color: #721c24; }
 
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #c3e6cb;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
@@ -555,7 +573,7 @@
                         </div>
 
                         <button type="submit" class="upload-btn" id="uploadBtn">
-                            🚀 Lancer la validation
+                             Lancer la validation
                         </button>
                     </div>
                 </form>
@@ -577,7 +595,7 @@
 
             <!-- Tab Recherche Username -->
             <div id="search" class="tab-content">
-                <form action="/search" method="post" id="searchForm">
+                <form id="searchForm">
                     <div class="upload-section">
                         <h2>Rechercher un utilisateur</h2>
                         <p>Entrez un username pour trouver ses profils et email</p>
@@ -587,8 +605,8 @@
                             <input type="text" id="usernameInput" name="username" class="text-input" placeholder="Ex: Feryel Lassili" required>
                         </div>
 
-                        <button type="submit" class="upload-btn">
-                            🔍 Lancer la recherche
+                        <button type="submit" class="upload-btn" id="searchBtn">
+                            Lancer la recherche
                         </button>
                     </div>
                 </form>
@@ -610,8 +628,8 @@
                         <input type="email" id="singleEmailInput" class="text-input" placeholder="exemple@domain.com" required>
                     </div>
 
-                    <button class="upload-btn" onclick="validateSingleEmail()">
-                        🤖 Analyser avec IA
+                    <button class="upload-btn" onclick="validateSingleEmail()" id="singleEmailBtn">
+                        Analyser avec IA
                     </button>
                 </div>
 
@@ -623,7 +641,7 @@
 
             <!-- Tab Analyse par Lot IA -->
             <div id="batch" class="tab-content">
-                <form id="batchAnalysisForm" enctype="multipart/form-data">
+                <form id="batchAnalysisForm">
                     <div class="upload-section">
                         <h2>Analyse par Lot avec IA</h2>
                         <p>Analyse avancée de votre liste d'emails avec statistiques IA</p>
@@ -634,8 +652,8 @@
                             <div class="file-name" id="batchFileName">Aucun fichier sélectionné</div>
                         </div>
 
-                        <button type="submit" class="upload-btn">
-                            🧠 Lancer l'analyse IA
+                        <button type="submit" class="upload-btn" id="batchAnalysisBtn">
+                             Lancer l'analyse IA
                         </button>
                     </div>
                 </form>
@@ -693,6 +711,7 @@
 
             // Gestion de l'analyse par lot IA
             const batchAnalysisForm = document.getElementById('batchAnalysisForm');
+            const batchAnalysisBtn = document.getElementById('batchAnalysisBtn');
             batchAnalysisForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 handleBatchAnalysis();
@@ -700,6 +719,7 @@
 
             // Gestion de la recherche
             const searchForm = document.getElementById('searchForm');
+            const searchBtn = document.getElementById('searchBtn');
             const searchResults = document.getElementById('searchResults');
             const resultsContent = document.getElementById('resultsContent');
 
@@ -749,20 +769,22 @@
                     loading.style.display = 'none';
                     results.style.display = 'block';
                     button.disabled = false;
-                    button.textContent = '🚀 Lancer la validation';
+                    button.textContent = ' Lancer la validation';
                 })
                 .catch(error => {
                     console.error('Erreur:', error);
                     loading.style.display = 'none';
                     alert('Erreur lors du traitement: ' + error.message);
                     button.disabled = false;
-                    button.textContent = '🚀 Lancer la validation';
+                    button.textContent = ' Lancer la validation';
                 });
         }
 
         // Fonction pour la validation d'email unique avec IA
         function validateSingleEmail() {
             const email = document.getElementById('singleEmailInput').value.trim();
+            const button = document.getElementById('singleEmailBtn');
+            
             if (!email) {
                 alert('Veuillez entrer une adresse email');
                 return;
@@ -778,6 +800,8 @@
                 </div>
             `;
             resultsDiv.style.display = 'block';
+            button.disabled = true;
+            button.textContent = '⏳ Analyse en cours...';
 
             fetch('/valider-email-ia', {
                     method: 'POST',
@@ -786,8 +810,17 @@
                     },
                     body: JSON.stringify({ email: email })
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erreur serveur: ' + response.status);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    if (data.erreur) {
+                        throw new Error(data.erreur);
+                    }
+
                     let html = `
                         <div class="stats-grid">
                             <div class="stat-card">
@@ -795,40 +828,60 @@
                                 <div class="stat-label">Statut</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-number">${data.confiance}%</div>
-                                <div class="stat-label">Confiance</div>
+                                <div class="stat-number">${data.confiance || 0}%</div>
+                                <div class="stat-label">Confiance IA</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-number">${data.score_professionnel || 0}</div>
-                                <div class="stat-label">Score Pro</div>
+                                <div class="stat-number">${data.hunter_score || 0}%</div>
+                                <div class="stat-label">Score Hunter</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-number">${data.niveau_qualite || 'N/A'}</div>
+                                <div class="stat-number">${data.score_qualite || 0}</div>
                                 <div class="stat-label">Qualité</div>
                             </div>
                         </div>
 
                         <div class="analysis-grid">
                             <div class="analysis-item">
-                                <h4>📊 Analyse IA</h4>
-                                <p>Score de validité: ${data.analyse_ia?.validity_confidence ? (data.analyse_ia.validity_confidence * 100).toFixed(1) + '%' : 'N/A'}</p>
-                                <p>Score de qualité: ${data.analyse_ia?.quality_score || 'N/A'}</p>
+                                <h4> Analyse IA</h4>
+                                <p><strong>Email:</strong> ${data.email || 'N/A'}</p>
+                                <p><strong>Probabilité valide:</strong> ${data.probabilite_valide || 0}%</p>
+                                <p><strong>Probabilité invalide:</strong> ${data.probabilite_invalide || 0}%</p>
                                 <div class="progress-bar">
-                                    <div class="progress-fill" style="width: ${data.confiance}%"></div>
+                                    <div class="progress-fill" style="width: ${data.confiance || 0}%"></div>
                                 </div>
                             </div>
 
                             <div class="analysis-item">
                                 <h4>🎯 Suggestions</h4>
-                                ${data.suggestions_correction && data.suggestions_correction.length > 0 ? 
-                                    '<ul style="text-align: left; margin-top: 10px;">' + 
-                                    data.suggestions_correction.map(sugg => `<li>${sugg}</li>`).join('') + 
-                                    '</ul>' : 
-                                    '<p>Aucune suggestion nécessaire</p>'
-                                }
+                    `;
+
+                    if (data.suggestions_correction && data.suggestions_correction.length > 0) {
+                        html += '<ul style="text-align: left; margin-top: 10px;">';
+                        data.suggestions_correction.forEach(sugg => {
+                            html += `<li>${sugg}</li>`;
+                        });
+                        html += '</ul>';
+                    } else {
+                        html += '<p>Aucune suggestion nécessaire</p>';
+                    }
+
+                    html += `
                             </div>
                         </div>
                     `;
+
+                    if (data.diagnostic && data.diagnostic.length > 0) {
+                        html += `
+                            <div class="analysis-item">
+                                <h4> Diagnostic</h4>
+                                <ul style="text-align: left; margin-top: 10px;">
+                        `;
+                        data.diagnostic.forEach(diag => {
+                            html += `<li>${diag}</li>`;
+                        });
+                        html += `</ul></div>`;
+                    }
 
                     if (data.correction_automatique) {
                         html += `
@@ -843,10 +896,20 @@
                     }
 
                     contentDiv.innerHTML = html;
+                    button.disabled = false;
+                    button.textContent = ' Analyser avec IA';
                 })
                 .catch(error => {
                     console.error('Erreur:', error);
-                    contentDiv.innerHTML = `<p style="color: #dc3545;">Erreur lors de l'analyse: ${error.message}</p>`;
+                    contentDiv.innerHTML = `
+                        <div class="error-message">
+                            <h4>❌ Erreur</h4>
+                            <p>Erreur lors de l'analyse: ${error.message}</p>
+                            <p>Vérifiez que l'email est correct et réessayez.</p>
+                        </div>
+                    `;
+                    button.disabled = false;
+                    button.textContent = ' Analyser avec IA';
                 });
         }
 
@@ -856,9 +919,11 @@
             validateSingleEmail();
         }
 
-        // Fonction pour l'analyse par lot IA
+        // Fonction pour l'analyse par lot IA - CORRIGÉE
         function handleBatchAnalysis() {
             const fileInput = document.getElementById('batchFileInput');
+            const button = document.getElementById('batchAnalysisBtn');
+            
             if (!fileInput.files[0]) {
                 alert('Veuillez sélectionner un fichier CSV');
                 return;
@@ -871,35 +936,49 @@
                 <div style="text-align: center; padding: 20px;">
                     <div class="spinner"></div>
                     <p>Analyse IA avancée en cours...</p>
+                    <p>Validation des emails et calcul des statistiques...</p>
                 </div>
             `;
             resultsDiv.style.display = 'block';
+            button.disabled = true;
+            button.textContent = '⏳ Analyse en cours...';
 
             const formData = new FormData();
             formData.append('fichier', fileInput.files[0]);
 
-            fetch('/batch-analyse-ia', {
+            // UTILISER LA BONNE ROUTE QUI FONCTIONNE
+            fetch('/importer-fichier', {
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erreur serveur: ' + response.status);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    if (data.erreur) {
+                        throw new Error(data.erreur);
+                    }
+
+                    // FORMATER LES DONNÉES POUR L'AFFICHAGE
                     let html = `
                         <div class="stats-grid">
                             <div class="stat-card">
-                                <div class="stat-number">${data.statistiques?.total || 0}</div>
+                                <div class="stat-number">${data.total || 0}</div>
                                 <div class="stat-label">Total emails</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-number">${data.statistiques?.valides || 0}</div>
+                                <div class="stat-number">${data.valides || 0}</div>
                                 <div class="stat-label">Emails valides</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-number">${data.statistiques?.score_moyen ? data.statistiques.score_moyen.toFixed(1) + '%' : '0%'}</div>
-                                <div class="stat-label">Score moyen</div>
+                                <div class="stat-number">${data.taux_validite || 0}%</div>
+                                <div class="stat-label">Taux validité</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-number">${data.statistiques?.qualite_moyenne ? data.statistiques.qualite_moyenne.toFixed(0) : 0}</div>
+                                <div class="stat-number">${data.score_qualite_moyen || 0}</div>
                                 <div class="stat-label">Qualité moyenne</div>
                             </div>
                         </div>
@@ -907,32 +986,107 @@
                         <div class="analysis-grid">
                             <div class="analysis-item">
                                 <h4>📈 Recommandations IA</h4>
-                                ${data.analyse_avancee?.recommandations ? 
-                                    '<ul style="text-align: left; margin-top: 10px;">' + 
-                                    data.analyse_avancee.recommandations.map(rec => `<li>${rec}</li>`).join('') + 
-                                    '</ul>' : 
-                                    '<p>Aucune recommandation</p>'
-                                }
+                    `;
+
+                    // Générer des recommandations basées sur les données
+                    const recommandations = [];
+                    if (data.taux_validite < 50) {
+                        recommandations.push("🔴 Taux de validité faible - Vérifiez la source de vos emails");
+                    } else if (data.taux_validite < 80) {
+                        recommandations.push("🟡 Taux de validité moyen - Certains emails peuvent être améliorés");
+                    } else {
+                        recommandations.push("🟢 Excellente qualité d'emails - Liste optimale pour le marketing");
+                    }
+
+                    if (data.taux_corrigeable > 30) {
+                        recommandations.push("🟡 Fort potentiel de correction - Activez les suggestions automatiques");
+                    }
+
+                    if (data.emails_corrigeables > 0) {
+                        recommandations.push(`🔧 ${data.emails_corrigeables} emails peuvent être corrigés automatiquement`);
+                    }
+
+                    if (recommandations.length > 0) {
+                        html += '<ul style="text-align: left; margin-top: 10px;">';
+                        recommandations.forEach(rec => {
+                            html += `<li>${rec}</li>`;
+                        });
+                        html += '</ul>';
+                    } else {
+                        html += '<p>Aucune recommandation spécifique</p>';
+                    }
+
+                    html += `
                             </div>
 
                             <div class="analysis-item">
-                                <h4>📊 Tendances</h4>
-                                <p>Distribution de confiance: ${data.analyse_avancee?.tendances?.distribution_confiance?.moyenne || 0}%</p>
-                                <p>Catégories de qualité:</p>
-                                <ul style="text-align: left; margin-top: 10px;">
-                                    <li>Faible: ${data.analyse_avancee?.tendances?.distribution_qualite?.categories?.faible || 0}</li>
-                                    <li>Moyen: ${data.analyse_avancee?.tendances?.distribution_qualite?.categories?.moyen || 0}</li>
-                                    <li>Élevé: ${data.analyse_avancee?.tendances?.distribution_qualite?.categories?.eleve || 0}</li>
-                                </ul>
+                                <h4> Statistiques avancées</h4>
+                    `;
+
+                    // Afficher les statistiques avancées si disponibles
+                    if (data.statistiques_avancees) {
+                        const stats = data.statistiques_avancees;
+                        html += `
+                            <p><strong>Domaines populaires:</strong></p>
+                            <ul style="text-align: left; margin-top: 10px;">
+                        `;
+                        
+                        if (stats.domaines_populaires && Object.keys(stats.domaines_populaires).length > 0) {
+                            Object.entries(stats.domaines_populaires).forEach(([domaine, count]) => {
+                                html += `<li>${domaine}: ${count} emails</li>`;
+                            });
+                        } else {
+                            html += '<li>Aucun domaine populaire identifié</li>';
+                        }
+                        
+                        html += `
+                            </ul>
+                            <p><strong>Patterns d'erreurs:</strong></p>
+                            <ul style="text-align: left;">
+                        `;
+                        
+                        if (stats.patterns_erreurs) {
+                            Object.entries(stats.patterns_erreurs).forEach(([erreur, count]) => {
+                                html += `<li>${erreur}: ${count}</li>`;
+                            });
+                        } else {
+                            html += '<li>Aucun pattern d\'erreur identifié</li>';
+                        }
+                        
+                        html += `</ul>`;
+                    } else {
+                        html += '<p>Statistiques détaillées non disponibles</p>';
+                    }
+
+                    html += `
                             </div>
+                        </div>
+
+                        <div style="margin-top: 20px; padding: 15px; background: #e7f3ff; border-radius: 8px;">
+                            <h4>📋 Résumé de l'analyse</h4>
+                            <p><strong>Emails traités:</strong> ${data.total || 0}</p>
+                            <p><strong>Validation réussie:</strong> ${data.valides || 0} emails</p>
+                            <p><strong>Taux de succès:</strong> ${data.taux_validite || 0}%</p>
+                            <p><strong>Emails corrigeables:</strong> ${data.emails_corrigeables || 0}</p>
+                            <p><strong>Score de qualité moyen:</strong> ${data.score_qualite_moyen || 0}/100</p>
                         </div>
                     `;
 
                     contentDiv.innerHTML = html;
+                    button.disabled = false;
+                    button.textContent = ' Lancer l\'analyse IA';
                 })
                 .catch(error => {
                     console.error('Erreur:', error);
-                    contentDiv.innerHTML = `<p style="color: #dc3545;">Erreur lors de l'analyse: ${error.message}</p>`;
+                    contentDiv.innerHTML = `
+                        <div class="error-message">
+                            <h4>❌ Erreur lors de l'analyse</h4>
+                            <p>${error.message}</p>
+                            <p>Vérifiez que le fichier est un CSV valide avec une colonne d'emails et réessayez.</p>
+                        </div>
+                    `;
+                    button.disabled = false;
+                    button.textContent = ' Lancer l\'analyse IA';
                 });
         }
 
@@ -948,32 +1102,45 @@
             document.getElementById(tabName).classList.add('active');
         }
 
-        // Gestion de la recherche (fonction existante)
+        // Gestion de la recherche
         function handleSearch() {
             const username = document.getElementById('usernameInput').value.trim();
+            const button = document.getElementById('searchBtn');
+            
             if (!username) {
                 alert('Veuillez entrer un username');
                 return;
             }
 
-            const searchBtn = document.querySelector('#searchForm .upload-btn');
             const searchResults = document.getElementById('searchResults');
             const resultsContent = document.getElementById('resultsContent');
 
-            searchBtn.disabled = true;
-            searchBtn.textContent = '🔍 Recherche en cours...';
+            button.disabled = true;
+            button.textContent = ' Recherche en cours...';
+            resultsContent.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div class="spinner"></div>
+                    <p>Recherche en cours...</p>
+                </div>
+            `;
+            searchResults.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('username', username);
 
             fetch('/search', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `username=${encodeURIComponent(username)}`
+                    body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erreur serveur: ' + response.status);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     let html = '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6;">';
-                    html += `<h4 style="color: #000; margin-bottom: 15px;">Résultats pour "${data.username}"</h4>`;
+                    html += `<h4 style="color: #000; margin-bottom: 15px;">Résultats pour "${data.username || username}"</h4>`;
 
                     if (data.nom_complet) {
                         html += `<p><strong>Nom complet:</strong> ${data.nom_complet}</p>`;
@@ -1020,15 +1187,20 @@
                     html += '</div>';
 
                     resultsContent.innerHTML = html;
-                    searchResults.style.display = 'block';
-                    searchBtn.disabled = false;
-                    searchBtn.textContent = '🔍 Lancer la recherche';
+                    button.disabled = false;
+                    button.textContent = 'Lancer la recherche';
                 })
                 .catch(error => {
                     console.error('Erreur:', error);
-                    alert('Erreur lors de la recherche: ' + error.message);
-                    searchBtn.disabled = false;
-                    searchBtn.textContent = '🔍 Lancer la recherche';
+                    resultsContent.innerHTML = `
+                        <div class="error-message">
+                            <h4>❌ Erreur de recherche</h4>
+                            <p>${error.message}</p>
+                            <p>Vérifiez votre connexion et réessayez.</p>
+                        </div>
+                    `;
+                    button.disabled = false;
+                    button.textContent = ' Lancer la recherche';
                 });
         }
     </script>
